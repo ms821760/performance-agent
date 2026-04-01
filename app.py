@@ -209,7 +209,7 @@ def dashboard():
         """)
 
         workouts = run_query("""
-            SELECT date, sport_type, name, moving_time_min, distance_miles, avg_hr
+            SELECT activity_id, date, sport_type, name, moving_time_min, distance_miles, avg_hr
             FROM workouts_strava
             WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date DESC
@@ -616,7 +616,7 @@ def workout_detail(activity_id):
                    s.distance_miles, s.moving_time_min, s.avg_hr, s.max_hr,
                    s.calories, s.total_elevation_gain_m
             FROM workouts_strava s
-            WHERE s.activity_id = {int(activity_id)}
+            WHERE s.activity_id::text = '{str(activity_id)}'
             LIMIT 1
         """)
 
