@@ -518,3 +518,68 @@ def phases():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=False)
+
+# ── API: Zone goals ──────────────────────────────────────────
+@app.route('/api/zone_goals')
+@login_required
+def zone_goals():
+    try:
+        recent_zones = run_query("""
+            SELECT
+                ROUND(SUM(z1_min)::numeric, 0) total_z1,
+                ROUND(SUM(z2_min)::numeric, 0) total_z2,
+                ROUND(SUM(z3_min)::numeric, 0) total_z3,
+                ROUND(SUM(z4_min)::numeric, 0) total_z4,
+                ROUND(SUM(z5_min)::numeric, 0) total_z5
+            FROM daily_activity_summary
+            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+        """)
+
+        four_week = run_query("""
+            SELECT week_start,
+                ROUND(SUM(z1_min)::numeric,0) z1,
+                ROUND(SUM(z2_min)::numeric,0) z2,
+                ROUND(SUM(z3_min)::numeric,0) z3,
+                ROUND(SUM(z4_min)::numeric,0) z4,
+                ROUND(SUM(z5_min)::numeric,0) z5
+            FROM daily_activity_summary
+            WHERE date >= CURRENT_DATE - INTERVAL '4 weeks'
+            GROUP BY week_start ORDER BY week_start
+        """)
+
+        phase = get_current_phase()
+
+        prompt = f"""{ATHLETE_CONTEXT}
+
+CURRENT PHASE: {phase['name']}
+Phase goal: {phase['goal']}
+
+RECENT ZONE DATA:
+Last 7 days totals: {json.dumps(recent_zones, default=str)}
+Last 4 weeks by week: {json.dumps(four_week, default=str)}
+
+Based on the athlete's current phase, goals, and recent zone distribution, recommend weekly target minutes for each HR zone.
+
+Respond with ONLY a valid JSON object, no other text:
+{{"z1": <minutes>, "z2": <minutes>, "z3": <minutes>, "z4": <minutes>, "z5": <minutes>, "rationale": "<one sentence>"}}
+
+Body comp phase guidance: prioritize Z2 for fat burning, minimize Z4/Z5 to protect muscle. Be realistic — base targets on current actual volumes."""
+
+        r = requests.post(
+            'https://api.anthropic.com/v1/messages',
+            headers={'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
+            json={'model':'claude-sonnet-4-20250514','max_tokens':200,'messages':[{'role':'user','content':prompt}]},
+            timeout=30
+        )
+        r.raise_for_status()
+        text = ''.join(b.get('text','') for b in r.json().get('content',[]))
+
+        import re
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            return jsonify(json.loads(match.group()))
+        raise ValueError('No JSON in response')
+
+    except Exception as e:
+        return jsonify({'z1':60,'z2':180,'z3':45,'z4':20,'z5':10,
+                       'rationale':'Default targets for body composition phase.'})
