@@ -653,11 +653,11 @@ async function loadDashboard() {
 
       // Day bars
       const maxMin = Math.max(...d.activity.map(a => (a.run_min||0)+(a.ride_min||0)+(a.strength_min||0)+(a.walk_min||0)), 1);
-      // Store workouts indexed by date for click lookup
-      const workoutsByDate = {};
+      // Store workouts indexed by date globally for click handlers
+      window.workoutsByDate = {};
       (d.workouts || []).forEach(w => {
-        if (!workoutsByDate[w.date]) workoutsByDate[w.date] = [];
-        workoutsByDate[w.date].push(w);
+        if (!window.workoutsByDate[w.date]) window.workoutsByDate[w.date] = [];
+        window.workoutsByDate[w.date].push(w);
       });
 
       const chart = document.getElementById('week-chart');
@@ -665,8 +665,8 @@ async function loadDashboard() {
         const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.walk_min||0);
         const pct = v => Math.round(v / maxMin * 100);
         const dayLabel = new Date(day.date).toLocaleDateString('en-US', {weekday:'short'});
-        const hasWorkouts = workoutsByDate[day.date] && workoutsByDate[day.date].length > 0;
-        const clickable = hasWorkouts ? `onclick="openDayWorkouts('${day.date}', workoutsByDate['${day.date}'] || [])" style="cursor:pointer"` : '';
+        const hasWorkouts = window.workoutsByDate[day.date] && window.workoutsByDate[day.date].length > 0;
+        const clickable = hasWorkouts ? `onclick="openDayWorkouts('${day.date}', window.workoutsByDate['${day.date}'] || [])" style="cursor:pointer"` : '';
         const hoverStyle = hasWorkouts ? 'hover-day' : '';
         return `<div class="day-row ${hoverStyle}" ${clickable} title="${hasWorkouts ? 'Click to view workouts' : ''}">
           <div class="day-label" style="color:${hasWorkouts ? 'var(--text)' : 'var(--dim)'}">${dayLabel}</div>
