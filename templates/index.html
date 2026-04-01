@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Performance Coach</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --gold: #c8a96e;
+  --green: #4a7c59;
+  --bg: #0a0a0a;
+  --bg2: #0d0d0d;
+  --bg3: #111;
+  --border: #1e1e1e;
+  --text: #e8e4d9;
+  --muted: #888;
+  --dim: #444;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Georgia, 'Times New Roman', serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+#header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  gap: 0;
+  flex-shrink: 0;
+}
+#header .brand {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+#header .sep { color: var(--border); margin: 0 14px; font-size: 18px; }
+nav { display: flex; gap: 2px; }
+nav button {
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: Georgia, serif;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+nav button:hover { color: var(--text); }
+nav button.active { color: var(--gold); background: #1a1500; }
+#header .spacer { flex: 1; }
+#header .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 5px var(--green);
+  transition: all 0.3s;
+}
+#header .dot.loading { background: var(--gold); box-shadow: 0 0 5px var(--gold); }
+#header .logout {
+  background: transparent; border: none;
+  color: var(--dim); font-size: 11px;
+  font-family: Georgia, serif; cursor: pointer;
+  margin-left: 16px; letter-spacing: 0.08em;
+  transition: color 0.15s;
+}
+#header .logout:hover { color: var(--text); }
+
+/* Main layout */
+#main { flex: 1; display: flex; overflow: hidden; }
+
+/* Tabs */
+.tab { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+.tab.active { display: flex; }
+
+/* ── CHAT TAB ── */
+#chat-messages {
+  flex: 1; overflow-y: auto;
+  padding: 24px 20px;
+  display: flex; flex-direction: column; gap: 20px;
+  max-width: 760px; width: 100%; margin: 0 auto;
+}
+.msg-user { display: flex; gap: 10px; align-items: flex-start; }
+.msg-user .dot2 {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold); margin-top: 7px; flex-shrink: 0;
+}
+.msg-user .text { font-size: 14px; line-height: 1.55; }
+.msg-coach { padding-left: 16px; border-left: 1px solid var(--border); }
+.msg-coach .label {
+  font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--green); margin-bottom: 8px;
+}
+.msg-coach .text { font-size: 13px; color: #bbb; line-height: 1.85; white-space: pre-wrap; }
+.msg-coach .qtags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+.qtag {
+  font-size: 10px; color: var(--dim);
+  background: var(--bg3); border: 1px solid var(--border);
+  padding: 2px 8px; border-radius: 2px; font-family: monospace;
+}
+.status-line { padding-left: 16px; border-left: 1px solid var(--border); }
+.status-line .label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--green); margin-bottom: 6px; }
+.status-line .text { font-size: 12px; color: var(--dim); font-style: italic; }
+
+/* Suggestions */
+#suggestions {
+  padding: 0 20px 16px;
+  max-width: 760px; width: 100%; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+.sug {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); padding: 10px 12px; text-align: left;
+  cursor: pointer; font-size: 12px; font-family: Georgia, serif;
+  line-height: 1.4; border-radius: 2px; transition: all 0.15s;
+}
+.sug:hover { border-color: var(--gold); color: var(--text); }
+
+/* Empty state */
+#chat-empty {
+  padding: 28px 20px 12px;
+  max-width: 760px; width: 100%; margin: 0 auto;
+}
+#chat-empty h2 { font-size: 22px; font-weight: normal; margin-bottom: 6px; }
+#chat-empty p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+
+/* Input bar */
+#chat-input {
+  border-top: 1px solid var(--border);
+  padding: 12px 20px 16px;
+  background: var(--bg2);
+  max-width: 760px; width: 100%; margin: 0 auto;
+}
+#input-row { display: flex; gap: 8px; align-items: flex-end; }
+#inp {
+  flex: 1; background: transparent; border: none;
+  border-bottom: 1px solid #2a2a2a; color: var(--text);
+  font-size: 13px; font-family: Georgia, serif;
+  padding: 7px 0; resize: none; outline: none; line-height: 1.5;
+}
+#inp::placeholder { color: var(--dim); }
+#sendbtn {
+  background: transparent; border: 1px solid var(--gold);
+  color: var(--gold); padding: 6px 14px; cursor: pointer;
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  font-family: Georgia, serif; transition: all 0.15s;
+}
+#sendbtn:hover:not(:disabled) { background: var(--gold); color: var(--bg); }
+#sendbtn:disabled { opacity: 0.25; cursor: default; }
+#hint { font-size: 10px; color: #252525; margin-top: 6px; }
+
+/* ── DASHBOARD TAB ── */
+#dashboard-content {
+  flex: 1; overflow-y: auto; padding: 24px 20px;
+  max-width: 900px; width: 100%; margin: 0 auto;
+}
+.section-title {
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 12px; margin-top: 28px;
+}
+.section-title:first-child { margin-top: 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 4px; }
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 14px 16px;
+}
+.card .label { font-size: 10px; color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.card .value { font-size: 22px; font-weight: normal; line-height: 1; }
+.card .unit { font-size: 11px; color: var(--muted); margin-left: 4px; }
+.card .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.card.highlight { border-color: var(--gold); }
+.card.warn { border-color: #8a3a2a; }
+.card.good { border-color: var(--green); }
+
+/* Phase banner */
+#phase-banner {
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 16px 18px; margin-bottom: 24px;
+  background: var(--bg2);
+}
+#phase-banner .phase-label {
+  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+#phase-banner .phase-name { font-size: 16px; margin-bottom: 6px; }
+#phase-banner .phase-goal { font-size: 12px; color: var(--muted); line-height: 1.6; }
+#phase-banner .phase-days { font-size: 11px; color: var(--dim); margin-top: 8px; }
+
+/* Nutrition alert */
+#nutrition-alert {
+  border: 1px solid #5a3a1a; background: #1a1000;
+  border-radius: 4px; padding: 12px 16px; margin-bottom: 16px;
+  font-size: 12px; color: #c8a96e; line-height: 1.6;
+  display: none;
+}
+
+/* Weekly bar chart */
+#week-chart { margin-top: 8px; }
+.day-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.day-label { font-size: 11px; color: var(--dim); width: 32px; flex-shrink: 0; }
+.bar-group { flex: 1; display: flex; gap: 2px; align-items: center; height: 14px; }
+.bar { height: 100%; border-radius: 1px; transition: width 0.3s; min-width: 0; }
+.bar.run { background: #4a7c59; }
+.bar.ride { background: #c8a96e; }
+.bar.strength { background: #4a6fa5; }
+.bar.walk { background: #666; }
+.day-total { font-size: 10px; color: var(--dim); width: 36px; text-align: right; flex-shrink: 0; }
+
+/* ── REPORT TAB ── */
+#report-content {
+  flex: 1; overflow-y: auto; padding: 24px 20px;
+  max-width: 760px; width: 100%; margin: 0 auto;
+}
+#report-text {
+  font-size: 13px; color: #bbb; line-height: 1.9;
+  white-space: pre-wrap; margin-top: 16px;
+}
+#generate-report {
+  background: transparent; border: 1px solid var(--gold);
+  color: var(--gold); padding: 10px 20px; cursor: pointer;
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  font-family: Georgia, serif; transition: all 0.15s;
+}
+#generate-report:hover { background: var(--gold); color: var(--bg); }
+#generate-report:disabled { opacity: 0.3; cursor: default; }
+
+/* ── GOALS TAB ── */
+#goals-content {
+  flex: 1; overflow-y: auto; padding: 24px 20px;
+  max-width: 760px; width: 100%; margin: 0 auto;
+}
+.phase-card {
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 18px 20px; margin-bottom: 12px; background: var(--bg2);
+}
+.phase-card.current { border-color: var(--gold); }
+.phase-card .pc-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-bottom: 4px; }
+.phase-card .pc-name { font-size: 16px; margin-bottom: 8px; }
+.phase-card .pc-goal { font-size: 12px; color: var(--muted); line-height: 1.65; }
+.phase-card .pc-dates { font-size: 11px; color: var(--dim); margin-top: 10px; }
+.phase-card .pc-badge {
+  display: inline-block; font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 2px;
+  margin-bottom: 6px;
+}
+.phase-card.current .pc-badge { background: #1a1500; color: var(--gold); }
+.phase-card .pc-badge.upcoming { background: #0f1a0f; color: var(--green); }
+
+/* Loading spinner */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Responsive */
+@media (max-width: 600px) {
+  #suggestions { grid-template-columns: 1fr; }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <div class="brand">Performance</div>
+  <span class="sep">|</span>
+  <nav>
+    <button class="active" onclick="showTab('chat', this)">Coach</button>
+    <button onclick="showTab('dashboard', this)">Dashboard</button>
+    <button onclick="showTab('report', this)">Report</button>
+    <button onclick="showTab('goals', this)">Goals</button>
+  </nav>
+  <div class="spacer"></div>
+  <div class="dot" id="status-dot"></div>
+  <button class="logout" onclick="window.location='/logout'">Sign out</button>
+</div>
+
+<div id="main">
+
+  <!-- ── CHAT TAB ── -->
+  <div class="tab active" id="tab-chat">
+    <div id="chat-messages">
+      <div id="chat-empty">
+        <h2>Your training data,<br><span style="color:var(--gold)">on demand.</span></h2>
+        <p>Ask anything about your training, body composition, nutrition, or recovery.</p>
+      </div>
+      <div id="suggestions">
+        <button class="sug" onclick="sendMsg('How was my training last week?')">How was my training last week?</button>
+        <button class="sug" onclick="sendMsg('How is my body composition progressing?')">How is my body composition progressing?</button>
+        <button class="sug" onclick="sendMsg('Am I eating enough protein for my training?')">Am I eating enough protein for my training?</button>
+        <button class="sug" onclick="sendMsg('Am I showing signs of overtraining?')">Am I showing signs of overtraining?</button>
+        <button class="sug" onclick="sendMsg('What should I focus on this week given my current phase?')">What should I focus on this week?</button>
+        <button class="sug" onclick="sendMsg('What\'s my longest ride this year?')">What's my longest ride this year?</button>
+        <button class="sug" onclick="sendMsg('How are my HR zones distributed this month?')">How are my HR zones this month?</button>
+        <button class="sug" onclick="sendMsg('Show me my top running PRs')">Show me my top running PRs</button>
+      </div>
+    </div>
+    <div style="max-width:760px;width:100%;margin:0 auto;">
+      <div id="chat-input">
+        <div id="input-row">
+          <textarea id="inp" rows="1" placeholder="Ask your coach..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button id="sendbtn" onclick="sendMsg()" disabled>Send</button>
+        </div>
+        <div id="hint">Enter to send · Shift+Enter for new line</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD TAB ── -->
+  <div class="tab" id="tab-dashboard">
+    <div id="dashboard-content">
+      <div id="phase-banner">
+        <div class="phase-label" style="color:var(--gold)">Current Phase</div>
+        <div class="phase-name" id="db-phase-name">Loading...</div>
+        <div class="phase-goal" id="db-phase-goal"></div>
+        <div class="phase-days" id="db-phase-days"></div>
+      </div>
+      <div id="nutrition-alert"></div>
+      <div class="section-title">Body Composition</div>
+      <div class="cards" id="body-comp-cards">
+        <div class="card"><div class="label">Loading</div><div class="value">—</div></div>
+      </div>
+      <div class="section-title">Last 7 Days</div>
+      <div class="cards" id="activity-cards">
+        <div class="card"><div class="label">Loading</div><div class="value">—</div></div>
+      </div>
+      <div class="section-title">Daily Breakdown</div>
+      <div id="week-chart"></div>
+      <div class="section-title">Recovery</div>
+      <div class="cards" id="recovery-cards">
+        <div class="card"><div class="label">Loading</div><div class="value">—</div></div>
+      </div>
+      <div class="section-title">Nutrition (Last 7 Days)</div>
+      <div class="cards" id="nutrition-cards">
+        <div class="card"><div class="label">Loading</div><div class="value">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REPORT TAB ── -->
+  <div class="tab" id="tab-report">
+    <div id="report-content">
+      <div class="section-title" style="margin-top:0">Weekly Training Report</div>
+      <button id="generate-report" onclick="generateReport()">Generate This Week's Report</button>
+      <div id="report-text"></div>
+    </div>
+  </div>
+
+  <!-- ── GOALS TAB ── -->
+  <div class="tab" id="tab-goals">
+    <div id="goals-content">
+      <div class="section-title" style="margin-top:0">Training Phases</div>
+      <div id="phases-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const history = [];
+let loading = false;
+
+// ── Tab navigation ────────────────────────────────────────────
+function showTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'goals') loadGoals();
+}
+
+// ── Status dot ────────────────────────────────────────────────
+function setLoading(v) {
+  loading = v;
+  document.getElementById('status-dot').className = 'dot' + (v ? ' loading' : '');
+  document.getElementById('sendbtn').disabled = v || !document.getElementById('inp').value.trim();
+}
+
+// ── Chat ──────────────────────────────────────────────────────
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+  document.getElementById('sendbtn').disabled = !el.value.trim() || loading;
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+
+function scrollBottom() {
+  const m = document.getElementById('chat-messages');
+  m.scrollTop = m.scrollHeight;
+}
+
+function hideEmpty() {
+  ['chat-empty','suggestions'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  });
+}
+
+function addUserMsg(text) {
+  hideEmpty();
+  const div = document.createElement('div');
+  div.className = 'msg-user';
+  div.innerHTML = `<div class="dot2"></div><div class="text">${esc(text)}</div>`;
+  document.getElementById('chat-messages').appendChild(div);
+  scrollBottom();
+}
+
+function showStatusMsg(text) {
+  let el = document.getElementById('chat-status');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'chat-status';
+    el.className = 'status-line';
+    el.innerHTML = '<div class="label">Coach</div><div class="text" id="chat-status-text"></div>';
+    document.getElementById('chat-messages').appendChild(el);
+  }
+  document.getElementById('chat-status-text').textContent = text;
+  scrollBottom();
+}
+
+function removeStatusMsg() {
+  const el = document.getElementById('chat-status');
+  if (el) el.remove();
+}
+
+function addCoachMsg(text, queries) {
+  removeStatusMsg();
+  const div = document.createElement('div');
+  div.className = 'msg-coach';
+  let qtags = '';
+  if (queries && queries.length) {
+    qtags = `<div class="qtags">${queries.map(q => `<span class="qtag">${esc(q)}</span>`).join('')}</div>`;
+  }
+  div.innerHTML = `<div class="label">Coach</div><div class="text">${esc(text)}</div>${qtags}`;
+  document.getElementById('chat-messages').appendChild(div);
+  scrollBottom();
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function sendMsg(textArg) {
+  const inp = document.getElementById('inp');
+  const q = (textArg || inp.value).trim();
+  if (!q || loading) return;
+  inp.value = ''; inp.style.height = 'auto';
+  document.getElementById('sendbtn').disabled = true;
+  addUserMsg(q);
+  setLoading(true);
+  showStatusMsg('Analyzing your data...');
+
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, history: history.slice(-6) })
+    });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+
+    history.push({ role: 'user', content: q });
+    history.push({ role: 'assistant', content: data.answer });
+    addCoachMsg(data.answer, data.queries_run);
+  } catch(e) {
+    addCoachMsg('Error: ' + e.message, []);
+  }
+
+  setLoading(false);
+  inp.focus();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+let dashLoaded = false;
+async function loadDashboard() {
+  if (dashLoaded) return;
+  dashLoaded = true;
+  try {
+    const r = await fetch('/api/dashboard');
+    const d = await r.json();
+    if (d.error) return;
+
+    // Phase banner
+    if (d.phase) {
+      document.getElementById('db-phase-name').textContent = d.phase.name;
+      document.getElementById('db-phase-goal').textContent = d.phase.goal;
+      const days = d.phase.days_remaining;
+      document.getElementById('db-phase-days').textContent =
+        days > 0 ? `${days} days remaining` : 'Phase complete';
+    }
+
+    // Nutrition alert
+    if (d.missing_nutrition && d.missing_nutrition.length) {
+      const alert = document.getElementById('nutrition-alert');
+      alert.style.display = 'block';
+      alert.textContent = `⚠ Missing nutrition log for: ${d.missing_nutrition.join(', ')}. Log your food to help your coach track your body composition progress.`;
+    }
+
+    // Body comp
+    if (d.body_comp) {
+      const b = d.body_comp;
+      const bfTarget = 15;
+      const bfDiff = (b.body_fat_pct - bfTarget).toFixed(1);
+      const muscleDiff = (105 - b.skeletal_muscle_mass_lb).toFixed(1);
+      document.getElementById('body-comp-cards').innerHTML = `
+        <div class="card ${b.body_fat_pct > 20 ? 'warn' : b.body_fat_pct < 15 ? 'good' : ''}">
+          <div class="label">Body Fat</div>
+          <div class="value">${b.body_fat_pct}<span class="unit">%</span></div>
+          <div class="sub">${bfDiff > 0 ? '+' : ''}${bfDiff}% from target</div>
+        </div>
+        <div class="card ${b.skeletal_muscle_mass_lb >= 105 ? 'good' : ''}">
+          <div class="label">Muscle Mass</div>
+          <div class="value">${b.skeletal_muscle_mass_lb}<span class="unit">lbs</span></div>
+          <div class="sub">Target 105-110 lbs</div>
+        </div>
+        <div class="card">
+          <div class="label">Weight</div>
+          <div class="value">${b.weight_lb}<span class="unit">lbs</span></div>
+          <div class="sub">${b.date}</div>
+        </div>
+        <div class="card ${b.inbody_score >= 90 ? 'good' : ''}">
+          <div class="label">InBody Score</div>
+          <div class="value">${b.inbody_score}</div>
+          <div class="sub">Visceral fat: ${b.visceral_fat_level}</div>
+        </div>
+      `;
+    }
+
+    // Activity summary (last 7 days)
+    if (d.activity && d.activity.length) {
+      const totals = d.activity.reduce((acc, day) => {
+        acc.run += day.run_min || 0;
+        acc.ride += day.ride_min || 0;
+        acc.strength += day.strength_min || 0;
+        acc.z2 += day.z2_min || 0;
+        acc.cal += day.total_calories_kcal || 0;
+        return acc;
+      }, { run: 0, ride: 0, strength: 0, z2: 0, cal: 0 });
+
+      document.getElementById('activity-cards').innerHTML = `
+        <div class="card">
+          <div class="label">Run</div>
+          <div class="value">${Math.round(totals.run)}<span class="unit">min</span></div>
+        </div>
+        <div class="card highlight">
+          <div class="label">Ride</div>
+          <div class="value">${Math.round(totals.ride)}<span class="unit">min</span></div>
+        </div>
+        <div class="card">
+          <div class="label">Strength</div>
+          <div class="value">${Math.round(totals.strength)}<span class="unit">min</span></div>
+        </div>
+        <div class="card good">
+          <div class="label">Z2 Time</div>
+          <div class="value">${Math.round(totals.z2)}<span class="unit">min</span></div>
+        </div>
+      `;
+
+      // Day bars
+      const maxMin = Math.max(...d.activity.map(a => (a.run_min||0)+(a.ride_min||0)+(a.strength_min||0)+(a.walk_min||0)), 1);
+      const chart = document.getElementById('week-chart');
+      chart.innerHTML = d.activity.map(day => {
+        const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.walk_min||0);
+        const pct = v => Math.round(v / maxMin * 100);
+        const dayLabel = new Date(day.date).toLocaleDateString('en-US', {weekday:'short'});
+        return `<div class="day-row">
+          <div class="day-label">${dayLabel}</div>
+          <div class="bar-group">
+            ${day.run_min > 0 ? `<div class="bar run" style="width:${pct(day.run_min)}%" title="Run: ${Math.round(day.run_min)}min"></div>` : ''}
+            ${day.ride_min > 0 ? `<div class="bar ride" style="width:${pct(day.ride_min)}%" title="Ride: ${Math.round(day.ride_min)}min"></div>` : ''}
+            ${day.strength_min > 0 ? `<div class="bar strength" style="width:${pct(day.strength_min)}%" title="Strength: ${Math.round(day.strength_min)}min"></div>` : ''}
+            ${day.walk_min > 0 ? `<div class="bar walk" style="width:${pct(day.walk_min)}%" title="Walk: ${Math.round(day.walk_min)}min"></div>` : ''}
+          </div>
+          <div class="day-total">${Math.round(total)}m</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Recovery
+    if (d.health && d.health.length) {
+      const recent = d.health[0];
+      const avgHrv = d.health.filter(h => h.hrv_ms).reduce((s, h) => s + h.hrv_ms, 0) / (d.health.filter(h => h.hrv_ms).length || 1);
+      document.getElementById('recovery-cards').innerHTML = `
+        <div class="card ${recent.resting_hr_bpm > 60 ? 'warn' : 'good'}">
+          <div class="label">Resting HR</div>
+          <div class="value">${recent.resting_hr_bpm || '—'}<span class="unit">bpm</span></div>
+          <div class="sub">${recent.date}</div>
+        </div>
+        <div class="card ${avgHrv > 50 ? 'good' : avgHrv < 30 ? 'warn' : ''}">
+          <div class="label">Avg HRV</div>
+          <div class="value">${Math.round(avgHrv) || '—'}<span class="unit">ms</span></div>
+          <div class="sub">7-day avg</div>
+        </div>
+      `;
+    }
+
+    // Nutrition
+    if (d.nutrition && d.nutrition.length) {
+      const avgCal = d.nutrition.reduce((s, n) => s + (n.calories_kcal||0), 0) / d.nutrition.length;
+      const avgPro = d.nutrition.reduce((s, n) => s + (n.protein_g||0), 0) / d.nutrition.length;
+      document.getElementById('nutrition-cards').innerHTML = `
+        <div class="card ${avgCal < 1800 ? 'warn' : ''}">
+          <div class="label">Avg Calories</div>
+          <div class="value">${Math.round(avgCal)}<span class="unit">kcal</span></div>
+          <div class="sub">${d.nutrition.length} days logged</div>
+        </div>
+        <div class="card ${avgPro < 150 ? 'warn' : 'good'}">
+          <div class="label">Avg Protein</div>
+          <div class="value">${Math.round(avgPro)}<span class="unit">g</span></div>
+          <div class="sub">Target: 160-180g</div>
+        </div>
+      `;
+    } else {
+      document.getElementById('nutrition-cards').innerHTML = `<div class="card warn"><div class="label">Nutrition</div><div class="value" style="font-size:14px">No data logged</div></div>`;
+    }
+
+  } catch(e) {
+    console.error('Dashboard error:', e);
+  }
+}
+
+// ── Report ────────────────────────────────────────────────────
+async function generateReport() {
+  const btn = document.getElementById('generate-report');
+  const out = document.getElementById('report-text');
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  out.textContent = '';
+  setLoading(true);
+
+  try {
+    const r = await fetch('/api/weekly_report');
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    out.textContent = d.report;
+  } catch(e) {
+    out.textContent = 'Error: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Generate This Week\'s Report';
+  setLoading(false);
+}
+
+// ── Goals ─────────────────────────────────────────────────────
+async function loadGoals() {
+  try {
+    const r = await fetch('/api/phases');
+    const phases = await r.json();
+    const container = document.getElementById('phases-list');
+    container.innerHTML = phases.map(p => `
+      <div class="phase-card ${p.is_current ? 'current' : ''}">
+        <div class="pc-badge ${p.is_current ? '' : 'upcoming'}">${p.is_current ? 'Current Phase' : 'Upcoming'}</div>
+        <div class="pc-name">${p.name}</div>
+        <div class="pc-goal">${p.goal}</div>
+        <div class="pc-dates">${p.start} → ${p.end} ${p.is_current && p.days_remaining > 0 ? `· ${p.days_remaining} days remaining` : ''}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('phases-list').textContent = 'Error loading phases';
+  }
+}
+
+// Auto-load dashboard in background after a moment
+setTimeout(loadDashboard, 1000);
+</script>
+</body>
+</html>
