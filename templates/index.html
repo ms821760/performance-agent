@@ -280,6 +280,64 @@ nav button.active { color: var(--gold); background: #1a1500; }
   #suggestions { grid-template-columns: 1fr; }
   .cards { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Workout modal ── */
+#workout-modal {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+  padding: 20px;
+}
+#workout-modal.open { display: flex; }
+#modal-box {
+  background: #0d0d0d; border: 1px solid var(--border);
+  border-radius: 4px; width: 100%; max-width: 680px;
+  max-height: 88vh; overflow-y: auto; padding: 24px;
+  position: relative;
+}
+#modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: transparent; border: none; color: var(--dim);
+  font-size: 18px; cursor: pointer; line-height: 1;
+  transition: color 0.15s;
+}
+#modal-close:hover { color: var(--text); }
+#modal-title { font-size: 16px; margin-bottom: 4px; padding-right: 28px; }
+#modal-meta { font-size: 11px; color: var(--muted); margin-bottom: 20px; }
+.modal-section { margin-bottom: 24px; }
+.modal-section-title {
+  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 10px;
+}
+.modal-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.modal-stat { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: 10px 14px; }
+.modal-stat .label { font-size: 10px; color: var(--dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+.modal-stat .value { font-size: 18px; }
+.modal-stat .unit { font-size: 11px; color: var(--muted); margin-left: 3px; }
+/* Zone bars in modal */
+.mzone-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.mzone-label { font-size: 11px; color: var(--dim); width: 24px; font-weight: 500; }
+.mzone-bar-wrap { flex: 1; height: 16px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.mzone-bar { height: 100%; border-radius: 2px; }
+.mzone-val { font-size: 11px; color: var(--muted); width: 48px; text-align: right; }
+/* Mini charts */
+.mini-chart { display: flex; align-items: flex-end; gap: 3px; height: 80px; margin-top: 6px; }
+.mini-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mini-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
+.mini-label { font-size: 9px; color: var(--dim); white-space: nowrap; }
+/* Clickable workout rows */
+.workout-row {
+  display: flex; gap: 10px; align-items: center;
+  padding: 8px 10px; border-radius: 3px;
+  cursor: pointer; transition: background 0.12s;
+  border: 1px solid transparent;
+  margin-bottom: 4px;
+}
+.workout-row:hover { background: var(--bg3); border-color: var(--border); }
+.workout-row .wr-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.workout-row .wr-name { font-size: 13px; flex: 1; }
+.workout-row .wr-meta { font-size: 11px; color: var(--muted); }
+.workout-row .wr-arrow { font-size: 10px; color: var(--dim); }
+
 </style>
 </head>
 <body>
@@ -350,6 +408,8 @@ nav button.active { color: var(--gold); background: #1a1500; }
       </div>
       <div class="section-title">Daily Breakdown</div>
       <div id="week-chart"></div>
+      <div class="section-title">Recent Workouts</div>
+      <div id="workouts-list"><div class="spinner"></div></div>
       <div class="section-title">Recovery</div>
       <div class="cards" id="recovery-cards">
         <div class="card"><div class="label">Loading</div><div class="value">—</div></div>
@@ -521,6 +581,10 @@ async function loadDashboard() {
       document.getElementById('db-phase-days').textContent =
         days > 0 ? `${days} days remaining` : 'Phase complete';
     }
+
+    // Workouts list - render clickable rows
+    const workoutsEl = document.getElementById('workouts-list');
+    if (workoutsEl) workoutsEl.innerHTML = renderWorkoutRows(d.workouts);
 
     // Nutrition alert
     if (d.missing_nutrition && d.missing_nutrition.length) {
@@ -762,8 +826,174 @@ async function loadGoals() {
   }
 }
 
+
+// ── Workout modal ─────────────────────────────────────────────
+async function openWorkout(activityId, name) {
+  const modal = document.getElementById('workout-modal');
+  document.getElementById('modal-title').textContent = name || 'Workout';
+  document.getElementById('modal-meta').textContent = 'Loading...';
+  document.getElementById('modal-stats').innerHTML = '';
+  document.getElementById('modal-zones').innerHTML = '';
+  document.getElementById('modal-pace-chart').innerHTML = '';
+  document.getElementById('modal-elev-chart').innerHTML = '';
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const r = await fetch('/api/workout/' + activityId);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+
+    const act   = d.activity;
+    const zones = d.zones;
+    const splits = d.splits || [];
+    const apple = d.apple;
+
+    // Meta
+    const sportLabel = act.sport_type || 'Workout';
+    const dist = act.distance_miles ? act.distance_miles.toFixed(2) + ' mi' : '';
+    const dur  = act.moving_time_min ? Math.round(act.moving_time_min) + ' min' : '';
+    document.getElementById('modal-meta').textContent =
+      [act.date, sportLabel, dist, dur].filter(Boolean).join('  ·  ');
+
+    // Stats
+    const stats = [];
+    if (act.distance_miles) stats.push({ label:'Distance', value: act.distance_miles.toFixed(2), unit:'mi' });
+    if (act.moving_time_min) stats.push({ label:'Duration', value: Math.round(act.moving_time_min), unit:'min' });
+    if (apple && apple.avg_pace_display) stats.push({ label:'Avg Pace', value: apple.avg_pace_display, unit:'/mi' });
+    if (act.avg_hr) stats.push({ label:'Avg HR', value: Math.round(act.avg_hr), unit:'bpm' });
+    if (act.max_hr) stats.push({ label:'Max HR', value: Math.round(act.max_hr), unit:'bpm' });
+    if (act.total_elevation_gain_m) stats.push({ label:'Elevation', value: Math.round(act.total_elevation_gain_m * 3.28), unit:'ft' });
+    if (act.calories) stats.push({ label:'Calories', value: Math.round(act.calories), unit:'kcal' });
+
+    document.getElementById('modal-stats').innerHTML = stats.map(s =>
+      `<div class="modal-stat"><div class="label">${s.label}</div><div class="value">${s.value}<span class="unit">${s.unit}</span></div></div>`
+    ).join('');
+
+    // HR Zones
+    const zoneData = zones || (apple ? {
+      z1_min: apple.z1_min, z2_min: apple.z2_min, z3_min: apple.z3_min,
+      z4_min: apple.z4_min, z5_min: apple.z5_min
+    } : null);
+
+    if (zoneData) {
+      const zDefs = [
+        { key:'z1_min', label:'Z1', color:'#555', name:'Recovery' },
+        { key:'z2_min', label:'Z2', color:'#4a7c59', name:'Aerobic' },
+        { key:'z3_min', label:'Z3', color:'#c8a96e', name:'Tempo' },
+        { key:'z4_min', label:'Z4', color:'#c07040', name:'Threshold' },
+        { key:'z5_min', label:'Z5', color:'#a03030', name:'Max' },
+      ];
+      const maxZ = Math.max(...zDefs.map(z => zoneData[z.key] || 0), 1);
+      document.getElementById('modal-zones').innerHTML =
+        '<div class="modal-section-title">Heart Rate Zones</div>' +
+        zDefs.map(z => {
+          const val = zoneData[z.key] || 0;
+          const pct = Math.round(val / maxZ * 100);
+          return `<div class="mzone-row">
+            <div class="mzone-label" title="${z.name}">${z.label}</div>
+            <div class="mzone-bar-wrap"><div class="mzone-bar" style="width:${pct}%;background:${z.color}"></div></div>
+            <div class="mzone-val">${Math.round(val)}m</div>
+          </div>`;
+        }).join('');
+    }
+
+    // Mile splits charts (only for runs with splits)
+    if (splits.length > 1) {
+      const maxPace = Math.max(...splits.map(s => s.split_pace_min_mi || 0));
+      const minPace = Math.min(...splits.map(s => s.split_pace_min_mi || 999));
+      const paceRange = maxPace - minPace || 1;
+
+      // Pace chart (inverted — faster = taller bar)
+      document.getElementById('modal-pace-chart').innerHTML =
+        '<div class="modal-section-title">Pace Per Mile (lower = faster)</div>' +
+        '<div class="mini-chart">' +
+        splits.map(s => {
+          const pace = s.split_pace_min_mi || 0;
+          const mins = Math.floor(pace);
+          const secs = Math.round((pace - mins) * 60);
+          const label = `${mins}:${String(secs).padStart(2,'0')}`;
+          // Invert: faster pace = taller bar
+          const heightPct = pace > 0 ? Math.round((1 - (pace - minPace) / (paceRange + 0.5)) * 100) : 10;
+          const hr = s.avg_hr_bpm ? ` · ${Math.round(s.avg_hr_bpm)}bpm` : '';
+          return `<div class="mini-bar-wrap" title="Mile ${s.mile}: ${label}/mi${hr}">
+            <div class="mini-bar" style="height:${Math.max(heightPct,5)}%;background:#4a7c59;width:100%"></div>
+            <div class="mini-label">M${s.mile}</div>
+          </div>`;
+        }).join('') + '</div>';
+
+      // Elevation chart
+      const maxElev = Math.max(...splits.map(s => s.elev_gain_ft || 0), 1);
+      document.getElementById('modal-elev-chart').innerHTML =
+        '<div class="modal-section-title">Elevation Gain Per Mile</div>' +
+        '<div class="mini-chart">' +
+        splits.map(s => {
+          const gain = s.elev_gain_ft || 0;
+          const heightPct = Math.round(gain / maxElev * 100);
+          return `<div class="mini-bar-wrap" title="Mile ${s.mile}: +${Math.round(gain)}ft">
+            <div class="mini-bar" style="height:${Math.max(heightPct,2)}%;background:#c8a96e;width:100%"></div>
+            <div class="mini-label">M${s.mile}</div>
+          </div>`;
+        }).join('') + '</div>';
+    }
+
+  } catch(e) {
+    document.getElementById('modal-meta').textContent = 'Error: ' + e.message;
+  }
+}
+
+function closeWorkoutModal() {
+  document.getElementById('workout-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('workout-modal')) closeWorkoutModal();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeWorkoutModal();
+});
+
+// ── Render clickable workout rows ─────────────────────────────
+function renderWorkoutRows(workouts) {
+  if (!workouts || !workouts.length) return '<div style="color:var(--dim);font-size:12px">No workouts this week</div>';
+  const icons = { Run:'🏃', Ride:'🚴', GravelRide:'🚴', VirtualRide:'🚴', Workout:'💪', Walk:'🚶', Hike:'🥾' };
+  const colors = { Run:'#4a7c59', Ride:'#c8a96e', GravelRide:'#c8a96e', VirtualRide:'#c8a96e', Workout:'#4a6fa5', Walk:'#666', Hike:'#666' };
+  return workouts.map(w => {
+    const icon  = icons[w.sport_type] || '⚡';
+    const color = colors[w.sport_type] || '#555';
+    const dist  = w.distance_miles > 0 ? w.distance_miles.toFixed(1) + ' mi' : '';
+    const dur   = w.moving_time_min ? Math.round(w.moving_time_min) + ' min' : '';
+    const hr    = w.avg_hr ? Math.round(w.avg_hr) + ' bpm' : '';
+    const meta  = [dist, dur, hr].filter(Boolean).join(' · ');
+    return `<div class="workout-row" onclick="openWorkout(${w.activity_id}, '${(w.name||'').replace(/'/g,'&apos;')}')">
+      <div class="wr-icon" style="background:${color}22;color:${color}">${icon}</div>
+      <div>
+        <div class="wr-name">${w.name || w.sport_type}</div>
+        <div class="wr-meta">${w.date}  ·  ${meta}</div>
+      </div>
+      <div class="wr-arrow">›</div>
+    </div>`;
+  }).join('');
+}
+
 // Auto-load dashboard in background after a moment
 setTimeout(loadDashboard, 1000);
 </script>
+
+<!-- Workout detail modal -->
+<div id="workout-modal" onclick="closeModal(event)">
+  <div id="modal-box">
+    <button id="modal-close" onclick="closeWorkoutModal()">✕</button>
+    <div id="modal-title">Loading...</div>
+    <div id="modal-meta"></div>
+    <div id="modal-stats" class="modal-stats"></div>
+    <div id="modal-zones" class="modal-section"></div>
+    <div id="modal-pace-chart" class="modal-section"></div>
+    <div id="modal-elev-chart" class="modal-section"></div>
+  </div>
+</div>
+
 </body>
 </html>
