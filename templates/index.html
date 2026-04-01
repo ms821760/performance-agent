@@ -231,6 +231,10 @@ nav button.active { color: var(--gold); background: #1a1500; }
 .zone-status { font-size: 10px; width: 16px; flex-shrink: 0; }
 #zone-rationale { font-size: 11px; color: var(--dim); margin-top: 10px; font-style: italic; line-height: 1.5; }
 
+
+.hover-day:hover { background: var(--bg3); border-radius: 3px; }
+.hover-day { transition: background 0.12s; margin: 0 -6px; padding: 2px 6px; }
+
 /* ── REPORT TAB ── */
 #report-content {
   flex: 1; overflow-y: auto; padding: 24px 20px;
@@ -408,8 +412,6 @@ nav button.active { color: var(--gold); background: #1a1500; }
       </div>
       <div class="section-title">Daily Breakdown</div>
       <div id="week-chart"></div>
-      <div class="section-title">Recent Workouts</div>
-      <div id="workouts-list"><div class="spinner"></div></div>
       <div class="section-title">Recovery</div>
       <div class="cards" id="recovery-cards">
         <div class="card"><div class="label">Loading</div><div class="value">—</div></div>
@@ -582,10 +584,6 @@ async function loadDashboard() {
         days > 0 ? `${days} days remaining` : 'Phase complete';
     }
 
-    // Workouts list - render clickable rows
-    const workoutsEl = document.getElementById('workouts-list');
-    if (workoutsEl) workoutsEl.innerHTML = renderWorkoutRows(d.workouts);
-
     // Nutrition alert
     if (d.missing_nutrition && d.missing_nutrition.length) {
       const alert = document.getElementById('nutrition-alert');
@@ -655,20 +653,30 @@ async function loadDashboard() {
 
       // Day bars
       const maxMin = Math.max(...d.activity.map(a => (a.run_min||0)+(a.ride_min||0)+(a.strength_min||0)+(a.walk_min||0)), 1);
+      // Store workouts indexed by date for click lookup
+      const workoutsByDate = {};
+      (d.workouts || []).forEach(w => {
+        if (!workoutsByDate[w.date]) workoutsByDate[w.date] = [];
+        workoutsByDate[w.date].push(w);
+      });
+
       const chart = document.getElementById('week-chart');
       chart.innerHTML = d.activity.map(day => {
         const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.walk_min||0);
         const pct = v => Math.round(v / maxMin * 100);
         const dayLabel = new Date(day.date).toLocaleDateString('en-US', {weekday:'short'});
-        return `<div class="day-row">
-          <div class="day-label">${dayLabel}</div>
+        const hasWorkouts = workoutsByDate[day.date] && workoutsByDate[day.date].length > 0;
+        const clickable = hasWorkouts ? `onclick="openDayWorkouts('${day.date}', workoutsByDate['${day.date}'] || [])" style="cursor:pointer"` : '';
+        const hoverStyle = hasWorkouts ? 'hover-day' : '';
+        return `<div class="day-row ${hoverStyle}" ${clickable} title="${hasWorkouts ? 'Click to view workouts' : ''}">
+          <div class="day-label" style="color:${hasWorkouts ? 'var(--text)' : 'var(--dim)'}">${dayLabel}</div>
           <div class="bar-group">
             ${day.run_min > 0 ? `<div class="bar run" style="width:${pct(day.run_min)}%" title="Run: ${Math.round(day.run_min)}min"></div>` : ''}
             ${day.ride_min > 0 ? `<div class="bar ride" style="width:${pct(day.ride_min)}%" title="Ride: ${Math.round(day.ride_min)}min"></div>` : ''}
             ${day.strength_min > 0 ? `<div class="bar strength" style="width:${pct(day.strength_min)}%" title="Strength: ${Math.round(day.strength_min)}min"></div>` : ''}
             ${day.walk_min > 0 ? `<div class="bar walk" style="width:${pct(day.walk_min)}%" title="Walk: ${Math.round(day.walk_min)}min"></div>` : ''}
           </div>
-          <div class="day-total">${Math.round(total)}m</div>
+          <div class="day-total">${Math.round(total) > 0 ? Math.round(total)+'m' : ''}</div>
         </div>`;
       }).join('');
     }
@@ -827,6 +835,32 @@ async function loadGoals() {
 }
 
 
+
+// ── Day workouts modal ────────────────────────────────────────
+async function openDayWorkouts(dateStr, workouts) {
+  if (!workouts || workouts.length === 0) return;
+
+  // If only one workout, open it directly
+  if (workouts.length === 1 && workouts[0].activity_id) {
+    openWorkout(workouts[0].activity_id, workouts[0].name);
+    return;
+  }
+
+  // Multiple workouts — show a picker first
+  const modal = document.getElementById('workout-modal');
+  const d = new Date(dateStr);
+  const dayStr = d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
+
+  document.getElementById('modal-title').textContent = dayStr;
+  document.getElementById('modal-meta').textContent = workouts.length + ' workouts';
+  document.getElementById('modal-stats').innerHTML = '';
+  document.getElementById('modal-zones').innerHTML = renderWorkoutRows(workouts);
+  document.getElementById('modal-pace-chart').innerHTML = '';
+  document.getElementById('modal-elev-chart').innerHTML = '';
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
 // ── Workout modal ─────────────────────────────────────────────
 async function openWorkout(activityId, name) {
   const modal = document.getElementById('workout-modal');
@@ -960,7 +994,7 @@ function renderWorkoutRows(workouts) {
   if (!workouts || !workouts.length) return '<div style="color:var(--dim);font-size:12px">No workouts this week</div>';
   const icons = { Run:'🏃', Ride:'🚴', GravelRide:'🚴', VirtualRide:'🚴', Workout:'💪', Walk:'🚶', Hike:'🥾' };
   const colors = { Run:'#4a7c59', Ride:'#c8a96e', GravelRide:'#c8a96e', VirtualRide:'#c8a96e', Workout:'#4a6fa5', Walk:'#666', Hike:'#666' };
-  return workouts.map(w => {
+  return workouts.filter(w => w.activity_id).map(w => {
     const icon  = icons[w.sport_type] || '⚡';
     const color = colors[w.sport_type] || '#555';
     const dist  = w.distance_miles > 0 ? w.distance_miles.toFixed(1) + ' mi' : '';
