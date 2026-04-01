@@ -279,15 +279,23 @@ def chat():
                 ORDER BY distance_miles DESC LIMIT 10
             """)
 
-        if any(w in q for w in ['run', 'pace', 'mile', 'km', 'marathon', '5k', '10k']):
-            fetched['runs'] = run_query("""
-                SELECT date, sport_type, distance_mi, avg_pace_display,
-                       avg_hr_bpm, z2_min, z3_min, z4_min
-                FROM workouts_apple
-                WHERE sport_type ILIKE '%run%'
-                AND date >= CURRENT_DATE - INTERVAL '90 days'
-                ORDER BY date DESC LIMIT 20
-            """)
+       if any(w in q for w in ['run', 'pace', 'mile', 'km', 'marathon', '5k', '10k', 'november', 'december', 'october', 'january', 'half marathon']):
+    fetched['runs_strava'] = run_query("""
+        SELECT date, name, sport_type, distance_miles,
+               moving_time_min, avg_hr, max_hr
+        FROM workouts_strava
+        WHERE sport_type = 'Run'
+        AND date >= CURRENT_DATE - INTERVAL '18 months'
+        ORDER BY date DESC LIMIT 60
+    """)
+    fetched['runs_apple'] = run_query("""
+        SELECT date, sport_type, distance_mi, avg_pace_display,
+               avg_hr_bpm, z2_min, z3_min, z4_min
+        FROM workouts_apple
+        WHERE sport_type ILIKE '%run%'
+        AND date >= CURRENT_DATE - INTERVAL '18 months'
+        ORDER BY date DESC LIMIT 60
+    """)
 
         if any(w in q for w in ['pr', 'personal record', 'best', 'fastest', 'record']):
             fetched['prs'] = run_query("""
