@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Performance Coach — Login</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #e8e4d9;
+  font-family: Georgia, 'Times New Roman', serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.container {
+  width: 100%;
+  max-width: 380px;
+  padding: 0 24px;
+}
+.header {
+  margin-bottom: 40px;
+}
+.header .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #c8a96e;
+  margin-bottom: 8px;
+}
+.header h1 {
+  font-size: 24px;
+  font-weight: normal;
+  color: #e8e4d9;
+  line-height: 1.3;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 8px;
+}
+input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #2a2a2a;
+  color: #e8e4d9;
+  font-size: 14px;
+  font-family: Georgia, serif;
+  padding: 8px 0;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus { border-bottom-color: #c8a96e; }
+input::placeholder { color: #333; }
+.btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #c8a96e;
+  color: #c8a96e;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-family: Georgia, serif;
+  padding: 12px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.15s;
+}
+.btn:hover { background: #c8a96e; color: #0a0a0a; }
+.error {
+  font-size: 12px;
+  color: #c0392b;
+  margin-bottom: 20px;
+  padding: 10px 12px;
+  border: 1px solid #2a1010;
+  background: #1a0a0a;
+}
+.divider {
+  width: 40px;
+  height: 1px;
+  background: #1e1e1e;
+  margin: 32px 0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="eyebrow">Performance</div>
+    <h1>Training<br>Intelligence</h1>
+  </div>
+  <div class="divider"></div>
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+  <form method="POST">
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" name="username" autocomplete="username" autofocus>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" name="password" autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn">Sign In</button>
+  </form>
+</div>
+</body>
+</html>
