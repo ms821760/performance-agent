@@ -217,6 +217,20 @@ nav button.active { color: var(--gold); background: #1a1500; }
 .bar.walk { background: #666; }
 .day-total { font-size: 10px; color: var(--dim); width: 36px; text-align: right; flex-shrink: 0; }
 
+
+/* Zone goal chart */
+#zone-chart { margin-top: 8px; }
+.zone-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.zone-label { font-size: 11px; color: var(--dim); width: 24px; flex-shrink: 0; font-weight: 500; }
+.zone-bar-wrap { flex: 1; position: relative; height: 18px; background: var(--bg3); border-radius: 2px; overflow: visible; }
+.zone-bar-actual { height: 100%; border-radius: 2px; transition: width 0.5s; }
+.zone-goal-line { position: absolute; top: -3px; bottom: -3px; width: 2px; border-radius: 1px; background: #fff; opacity: 0.4; }
+.zone-nums { display: flex; gap: 4px; align-items: center; width: 90px; flex-shrink: 0; }
+.zone-actual-num { font-size: 11px; color: var(--text); width: 36px; text-align: right; }
+.zone-goal-num { font-size: 10px; color: var(--dim); }
+.zone-status { font-size: 10px; width: 16px; flex-shrink: 0; }
+#zone-rationale { font-size: 11px; color: var(--dim); margin-top: 10px; font-style: italic; line-height: 1.5; }
+
 /* ── REPORT TAB ── */
 #report-content {
   flex: 1; overflow-y: auto; padding: 24px 20px;
@@ -340,6 +354,9 @@ nav button.active { color: var(--gold); background: #1a1500; }
       <div class="cards" id="recovery-cards">
         <div class="card"><div class="label">Loading</div><div class="value">—</div></div>
       </div>
+      <div class="section-title">HR Zones vs Weekly Goals</div>
+      <div id="zone-chart"><div class="spinner"></div></div>
+      <div id="zone-rationale"></div>
       <div class="section-title">Nutrition (Last 7 Days)</div>
       <div class="cards" id="nutrition-cards">
         <div class="card"><div class="label">Loading</div><div class="value">—</div></div>
@@ -592,6 +609,9 @@ async function loadDashboard() {
       }).join('');
     }
 
+    // Load zone chart with activity data
+    loadZoneChart(d.activity);
+
     // Recovery
     if (d.health && d.health.length) {
       const recent = d.health[0];
@@ -632,6 +652,71 @@ async function loadDashboard() {
 
   } catch(e) {
     console.error('Dashboard error:', e);
+  }
+}
+
+
+// ── Zone chart ────────────────────────────────────────────────
+async function loadZoneChart(activityData) {
+  const chart = document.getElementById('zone-chart');
+  const rationale = document.getElementById('zone-rationale');
+  chart.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    // Compute actual zone totals from last 7 days activity data
+    const actual = { z1:0, z2:0, z3:0, z4:0, z5:0 };
+    if (activityData) {
+      activityData.forEach(day => {
+        actual.z1 += day.z1_min || 0;
+        actual.z2 += day.z2_min || 0;
+        actual.z3 += day.z3_min || 0;
+        actual.z4 += day.z4_min || 0;
+        actual.z5 += day.z5_min || 0;
+      });
+    }
+
+    // Fetch goals from agent
+    const r = await fetch('/api/zone_goals');
+    const goals = await r.json();
+
+    const zones = [
+      { key:'z1', label:'Z1', color:'#555', name:'Recovery' },
+      { key:'z2', label:'Z2', color:'#4a7c59', name:'Aerobic' },
+      { key:'z3', label:'Z3', color:'#c8a96e', name:'Tempo' },
+      { key:'z4', label:'Z4', color:'#c07040', name:'Threshold' },
+      { key:'z5', label:'Z5', color:'#a03030', name:'Max' },
+    ];
+
+    const maxVal = Math.max(...zones.map(z => Math.max(actual[z.key]||0, goals[z.key]||0)), 1);
+
+    chart.innerHTML = zones.map(z => {
+      const act = Math.round(actual[z.key] || 0);
+      const goal = goals[z.key] || 0;
+      const actPct = Math.round(act / maxVal * 100);
+      const goalPct = Math.round(goal / maxVal * 100);
+      const pct = act >= goal ? 100 : Math.round(act / goal * 100);
+      const status = act >= goal ? '✓' : act >= goal * 0.8 ? '~' : '';
+      const statusColor = act >= goal ? 'var(--green)' : act >= goal * 0.8 ? 'var(--gold)' : 'var(--dim)';
+      return `<div class="zone-row">
+        <div class="zone-label" title="${z.name}">${z.label}</div>
+        <div class="zone-bar-wrap">
+          <div class="zone-bar-actual" style="width:${actPct}%;background:${z.color}"></div>
+          <div class="zone-goal-line" style="left:${goalPct}%"></div>
+        </div>
+        <div class="zone-nums">
+          <div class="zone-actual-num">${act}m</div>
+          <div class="zone-goal-num">/ ${goal}m</div>
+        </div>
+        <div class="zone-status" style="color:${statusColor}">${status}</div>
+      </div>`;
+    }).join('');
+
+    if (goals.rationale) {
+      rationale.textContent = goals.rationale;
+    }
+  } catch(e) {
+    chart.textContent = 'Could not load zone goals.';
+    console.error(e);
   }
 }
 
