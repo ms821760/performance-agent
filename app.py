@@ -604,3 +604,66 @@ def phases():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=False)
+
+# ── API: Workout detail ───────────────────────────────────────
+@app.route('/api/workout/<activity_id>')
+@login_required
+def workout_detail(activity_id):
+    try:
+        # Main activity from Strava
+        activity = run_query(f"""
+            SELECT s.activity_id, s.date, s.sport_type, s.name,
+                   s.distance_miles, s.moving_time_min, s.avg_hr, s.max_hr,
+                   s.calories, s.total_elevation_gain_m
+            FROM workouts_strava s
+            WHERE s.activity_id = {int(activity_id)}
+            LIMIT 1
+        """)
+
+        if not activity:
+            return jsonify({'error': 'Activity not found'}), 404
+
+        act = activity[0]
+
+        # HR zones from workout_hr_zones
+        zones = run_query(f"""
+            SELECT z1_min, z2_min, z3_min, z4_min, z5_min,
+                   avg_hr_bpm, max_hr_bpm
+            FROM workout_hr_zones
+            WHERE activity_id = {int(activity_id)}
+            LIMIT 1
+        """)
+
+        # Mile splits from workout_splits (match by date for runs)
+        splits = []
+        apple = []
+        if act['sport_type'] == 'Run':
+            apple = run_query(f"""
+                SELECT workout_id, distance_mi, avg_pace_display, avg_pace_min_mi,
+                       avg_hr_bpm, max_hr_bpm, elevation_gain_ft, elevation_loss_ft,
+                       z1_min, z2_min, z3_min, z4_min, z5_min
+                FROM workouts_apple
+                WHERE date = '{act['date']}'
+                AND sport_type ILIKE '%run%'
+                LIMIT 1
+            """)
+
+            if apple:
+                splits = run_query(f"""
+                    SELECT mile, split_pace_display, split_pace_min_mi,
+                           split_distance_mi, split_duration_min,
+                           elev_gain_ft, elev_loss_ft, avg_hr_bpm
+                    FROM workout_splits
+                    WHERE workout_id = '{apple[0]['workout_id']}'
+                    ORDER BY mile
+                """)
+
+        return jsonify({
+            'activity': act,
+            'zones':    zones[0] if zones else None,
+            'splits':   splits or [],
+            'apple':    apple[0] if apple else None
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
