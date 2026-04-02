@@ -93,7 +93,7 @@ DATABASE SCHEMA (PostgreSQL):
 POSTGRESQL DATE RULES - CRITICAL:
 - NEVER use YEAR(), MONTH(), DAY() - these are MySQL not PostgreSQL
 - Current year: date >= '2026-01-01'
-- Last 7 days: date >= CURRENT_DATE - INTERVAL '7 days'
+- Last 8 days: date >= CURRENT_DATE - INTERVAL '8 days'
 - Last 30 days: date >= CURRENT_DATE - INTERVAL '30 days'
 - Specific month: date >= '2025-11-01' AND date < '2025-12-01'
 - Always add LIMIT
@@ -190,28 +190,28 @@ def dashboard():
                    z1_min, z2_min, z3_min, z4_min, z5_min,
                    total_calories_kcal, steps
             FROM daily_activity_summary
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date
         """)
 
         health = run_query("""
             SELECT date, resting_hr_bpm, hrv_ms, steps, active_calories_kcal
             FROM daily_health
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date DESC LIMIT 7
         """)
 
         nutrition = run_query("""
             SELECT date, calories_kcal, protein_g, carbs_g, fat_g
             FROM daily_nutrition
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date DESC LIMIT 7
         """)
 
         workouts = run_query("""
             SELECT activity_id, date, sport_type, name, moving_time_min, distance_miles, avg_hr
             FROM workouts_strava
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date DESC
         """)
 
@@ -259,14 +259,14 @@ def chat():
                        z1_min, z2_min, z3_min, z4_min, z5_min,
                        total_calories_kcal, steps
                 FROM daily_activity_summary
-                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+                WHERE date >= CURRENT_DATE - INTERVAL '8 days'
                 ORDER BY date
             """)
             fetched['workouts_week'] = run_query("""
                 SELECT date, sport_type, name, moving_time_min,
                        distance_miles, avg_hr, calories
                 FROM workouts_strava
-                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+                WHERE date >= CURRENT_DATE - INTERVAL '8 days'
                 ORDER BY date
             """)
 
@@ -389,7 +389,7 @@ def chat():
             fetched['health_recent'] = run_query("""
                 SELECT date, resting_hr_bpm, hrv_ms
                 FROM daily_health
-                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+                WHERE date >= CURRENT_DATE - INTERVAL '8 days'
                 ORDER BY date DESC
             """)
 
@@ -399,7 +399,7 @@ def chat():
                 SELECT date, run_min, ride_min, strength_min, walk_min,
                        z2_min, total_calories_kcal
                 FROM daily_activity_summary
-                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+                WHERE date >= CURRENT_DATE - INTERVAL '8 days'
                 ORDER BY date
             """)
 
@@ -483,14 +483,14 @@ def weekly_report():
         nutrition = run_query("""
             SELECT date, calories_kcal, protein_g
             FROM daily_nutrition
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date
         """)
 
         health = run_query("""
             SELECT date, resting_hr_bpm, hrv_ms
             FROM daily_health
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date
         """)
 
@@ -543,7 +543,7 @@ def zone_goals():
                 ROUND(SUM(z4_min)::numeric, 0) total_z4,
                 ROUND(SUM(z5_min)::numeric, 0) total_z5
             FROM daily_activity_summary
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
         """)
 
         four_week = run_query("""
@@ -566,7 +566,7 @@ CURRENT PHASE: {phase['name']}
 Phase goal: {phase['goal']}
 
 RECENT ZONE DATA:
-Last 7 days totals: {json.dumps(recent_zones, default=str)}
+Last 8 days totals: {json.dumps(recent_zones, default=str)}
 Last 4 weeks by week: {json.dumps(four_week, default=str)}
 
 Based on the athlete's current phase, goals, and recent zone distribution, recommend weekly target minutes for each HR zone.
