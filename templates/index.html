@@ -235,6 +235,19 @@ nav button.active { color: var(--gold); background: #1a1500; }
 .hover-day:hover { background: var(--bg3); border-radius: 3px; }
 .hover-day { transition: background 0.12s; margin: 0 -6px; padding: 2px 6px; }
 
+
+/* ATL/CTL chart */
+#training-load-chart { margin-top: 8px; position: relative; }
+#tl-canvas-wrap { position: relative; height: 140px; width: 100%; }
+#tl-canvas { width: 100%; height: 100%; }
+.tl-legend { display: flex; gap: 16px; margin-top: 8px; flex-wrap: wrap; }
+.tl-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.tl-legend-dot { width: 10px; height: 3px; border-radius: 2px; }
+.tl-current { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.tl-stat { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: 8px 12px; }
+.tl-stat .label { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+.tl-stat .value { font-size: 16px; }
+
 /* ── REPORT TAB ── */
 #report-content {
   flex: 1; overflow-y: auto; padding: 24px 20px;
@@ -325,9 +338,9 @@ nav button.active { color: var(--gold); background: #1a1500; }
 .mzone-val { font-size: 11px; color: var(--muted); width: 48px; text-align: right; }
 /* Mini charts */
 .mini-chart { display: flex; align-items: flex-end; gap: 3px; height: 80px; margin-top: 6px; }
-.mini-bar-wrap { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
-.mini-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; flex-shrink: 0; }
-.mini-label { font-size: 9px; color: var(--dim); white-space: nowrap; flex-shrink: 0; }
+.mini-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mini-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
+.mini-label { font-size: 9px; color: var(--dim); white-space: nowrap; }
 /* Clickable workout rows */
 .workout-row {
   display: flex; gap: 10px; align-items: center;
@@ -419,6 +432,16 @@ nav button.active { color: var(--gold); background: #1a1500; }
       <div class="section-title">HR Zones vs Weekly Goals</div>
       <div id="zone-chart"><div class="spinner"></div></div>
       <div id="zone-rationale"></div>
+      <div class="section-title">Training Load (ATL / CTL / TSB)</div>
+      <div id="training-load-chart">
+        <div class="tl-current" id="tl-current-stats"></div>
+        <div id="tl-canvas-wrap"><canvas id="tl-canvas"></canvas></div>
+        <div class="tl-legend">
+          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#c8a96e"></div>CTL — Fitness</div>
+          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#a03030"></div>ATL — Fatigue</div>
+          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#4a7c59"></div>TSB — Form</div>
+        </div>
+      </div>
       <div class="section-title">Nutrition (Last 7 Days)</div>
       <div class="cards" id="nutrition-cards">
         <div class="card"><div class="label">Loading</div><div class="value">—</div></div>
@@ -666,7 +689,7 @@ async function loadDashboard() {
         const pct = v => Math.round(v / maxMin * 100);
         const dayLabel = new Date(day.date).toLocaleDateString('en-US', {weekday:'short'});
         const hasWorkouts = window.workoutsByDate[day.date] && window.workoutsByDate[day.date].length > 0;
-        const clickable = hasWorkouts ? `onclick="event.stopPropagation(); openDayWorkouts('${day.date}', window.workoutsByDate['${day.date}'] || [])" style="cursor:pointer"` : '';
+        const clickable = hasWorkouts ? `onclick="openDayWorkouts('${day.date}', window.workoutsByDate['${day.date}'] || [])" style="cursor:pointer"` : '';
         const hoverStyle = hasWorkouts ? 'hover-day' : '';
         return `<div class="day-row ${hoverStyle}" ${clickable} title="${hasWorkouts ? 'Click to view workouts' : ''}">
           <div class="day-label" style="color:${hasWorkouts ? 'var(--text)' : 'var(--dim)'}">${dayLabel}</div>
@@ -683,6 +706,7 @@ async function loadDashboard() {
 
     // Load zone chart with activity data
     loadZoneChart(d.activity);
+    loadTrainingLoad();
 
     // Recovery
     if (d.health && d.health.length) {
@@ -1010,6 +1034,120 @@ function renderWorkoutRows(workouts) {
       <div class="wr-arrow">›</div>
     </div>`;
   }).join('');
+}
+
+
+// ── Training Load Chart ───────────────────────────────────────
+async function loadTrainingLoad() {
+  try {
+    const r = await fetch('/api/training_load');
+    const d = await r.json();
+    if (d.error || !d.data || !d.data.length) return;
+
+    const data    = d.data;
+    const current = d.current;
+
+    // Current stats
+    const tsb = current.tsb || 0;
+    const tsbColor = tsb > 5 ? 'var(--green)' : tsb < -30 ? '#a03030' : tsb < -10 ? '#c8a96e' : 'var(--text)';
+    const tsbLabel = tsb > 5 ? 'Fresh' : tsb < -30 ? 'High Fatigue' : tsb < -10 ? 'Productive Load' : 'Neutral';
+
+    document.getElementById('tl-current-stats').innerHTML = `
+      <div class="tl-stat"><div class="label">CTL — Fitness</div><div class="value" style="color:#c8a96e">${current.ctl}</div></div>
+      <div class="tl-stat"><div class="label">ATL — Fatigue</div><div class="value" style="color:#a03030">${current.atl}</div></div>
+      <div class="tl-stat"><div class="label">TSB — Form</div><div class="value" style="color:${tsbColor}">${current.tsb > 0 ? '+' : ''}${current.tsb} (${tsbLabel})</div></div>
+      <div class="tl-stat"><div class="label">Today TSS</div><div class="value">${current.tss}</div></div>
+    `;
+
+    // Draw canvas chart
+    const canvas = document.getElementById('tl-canvas');
+    const wrap   = document.getElementById('tl-canvas-wrap');
+    canvas.width  = wrap.offsetWidth * window.devicePixelRatio;
+    canvas.height = wrap.offsetHeight * window.devicePixelRatio;
+    canvas.style.width  = wrap.offsetWidth + 'px';
+    canvas.style.height = wrap.offsetHeight + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+    const W = wrap.offsetWidth;
+    const H = wrap.offsetHeight;
+    const pad = { top: 10, right: 10, bottom: 24, left: 36 };
+    const chartW = W - pad.left - pad.right;
+    const chartH = H - pad.top - pad.bottom;
+
+    // Value ranges
+    const allVals = data.flatMap(d => [d.ctl, d.atl, d.tsb]);
+    const minVal  = Math.min(...allVals, -40);
+    const maxVal  = Math.max(...allVals, 60);
+    const range   = maxVal - minVal || 1;
+
+    const xScale = i => pad.left + (i / (data.length - 1)) * chartW;
+    const yScale = v => pad.top + chartH - ((v - minVal) / range) * chartH;
+
+    // Zero line
+    const zeroY = yScale(0);
+    ctx.strokeStyle = '#2a2a2a';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, zeroY);
+    ctx.lineTo(pad.left + chartW, zeroY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // TSB fill (positive = green, negative = red)
+    ctx.beginPath();
+    data.forEach((d, i) => {
+      if (i === 0) ctx.moveTo(xScale(i), yScale(d.tsb));
+      else ctx.lineTo(xScale(i), yScale(d.tsb));
+    });
+    ctx.lineTo(xScale(data.length - 1), zeroY);
+    ctx.lineTo(xScale(0), zeroY);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(74,124,89,0.15)';
+    ctx.fill();
+
+    // Draw lines
+    const drawLine = (key, color, width) => {
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      data.forEach((d, i) => {
+        if (i === 0) ctx.moveTo(xScale(i), yScale(d[key]));
+        else ctx.lineTo(xScale(i), yScale(d[key]));
+      });
+      ctx.stroke();
+    };
+
+    drawLine('tsb', '#4a7c59', 1.5);
+    drawLine('atl', '#a03030', 1.5);
+    drawLine('ctl', '#c8a96e', 2);
+
+    // Y axis labels
+    ctx.fillStyle = '#444';
+    ctx.font = '10px Georgia';
+    ctx.textAlign = 'right';
+    [0, Math.round(maxVal * 0.5), Math.round(maxVal), Math.round(minVal * 0.5)].forEach(v => {
+      const y = yScale(v);
+      if (y >= pad.top && y <= pad.top + chartH) {
+        ctx.fillText(v, pad.left - 4, y + 3);
+      }
+    });
+
+    // X axis date labels (every 2 weeks)
+    ctx.textAlign = 'center';
+    data.forEach((d, i) => {
+      if (i % 14 === 0) {
+        const dt = new Date(d.date);
+        const label = (dt.getMonth()+1) + '/' + dt.getDate();
+        ctx.fillText(label, xScale(i), H - 6);
+      }
+    });
+
+  } catch(e) {
+    console.error('Training load error:', e);
+  }
 }
 
 // Auto-load dashboard in background after a moment
