@@ -325,9 +325,9 @@ nav button.active { color: var(--gold); background: #1a1500; }
 .mzone-val { font-size: 11px; color: var(--muted); width: 48px; text-align: right; }
 /* Mini charts */
 .mini-chart { display: flex; align-items: flex-end; gap: 3px; height: 80px; margin-top: 6px; }
-.mini-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.mini-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
-.mini-label { font-size: 9px; color: var(--dim); white-space: nowrap; }
+.mini-bar-wrap { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.mini-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; flex-shrink: 0; }
+.mini-label { font-size: 9px; color: var(--dim); white-space: nowrap; flex-shrink: 0; }
 /* Clickable workout rows */
 .workout-row {
   display: flex; gap: 10px; align-items: center;
