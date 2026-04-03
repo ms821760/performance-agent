@@ -367,6 +367,7 @@ def chat():
                 SELECT week_start,
                        ROUND(SUM(run_min)::numeric, 0) run_min,
                        ROUND(SUM(ride_min)::numeric, 0) ride_min,
+                       ROUND(SUM(cardo_min)::numeric, 0) cardio_min,
                        ROUND(SUM(strength_min)::numeric, 0) strength_min,
                        ROUND(SUM(z2_min)::numeric, 0) z2_min,
                        ROUND(SUM(z3_min+z4_min+z5_min)::numeric, 0) high_intensity_min
@@ -381,6 +382,7 @@ def chat():
                 SELECT week_start,
                        ROUND(SUM(run_min)::numeric, 0) run_min,
                        ROUND(SUM(ride_min)::numeric, 0) ride_min,
+                       ROUND(SUM(cardio_min)::numeric, 0) cardio_min,
                        ROUND(SUM(strength_min)::numeric, 0) strength_min
                 FROM daily_activity_summary
                 WHERE date >= CURRENT_DATE - INTERVAL '4 weeks'
@@ -396,7 +398,7 @@ def chat():
         # Default fallback
         if not fetched:
             fetched['weekly_summary'] = run_query("""
-                SELECT date, run_min, ride_min, strength_min, walk_min,
+                SELECT date, run_min, ride_min, strength_min, walk_min, cardio_min,
                        z2_min, total_calories_kcal
                 FROM daily_activity_summary
                 WHERE date >= CURRENT_DATE - INTERVAL '7 days'
