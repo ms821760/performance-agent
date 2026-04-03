@@ -255,7 +255,7 @@ def chat():
         # Weekly/recent activity
         if any(w in q for w in ['last week', 'this week', 'training week', 'how was', 'weekly']):
             fetched['weekly_summary'] = run_query("""
-                SELECT date, run_min, ride_min, strength_min, walk_min,
+                SELECT date, run_min, ride_min, strength_min, walk_min, cardio_min
                        z1_min, z2_min, z3_min, z4_min, z5_min,
                        total_calories_kcal, steps
                 FROM daily_activity_summary
