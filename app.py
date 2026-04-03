@@ -80,22 +80,21 @@ KEY COACHING RULES:
 
 DB_SCHEMA = """
 DATABASE SCHEMA (PostgreSQL):
-- workouts_strava: activity_id, date, sport_type, name, moving_time_min, distance_miles, avg_hr, max_hr, calories, total_elevation_gain_m. sport_type values: Run/Ride/GravelRide/VirtualRide/Workout/Walk
+- workouts_strava: activity_id, date, sport_type, name, moving_time_min, distance_miles, avg_hr, max_hr, calories, total_elevation_gain_m. sport_type: Run/Ride/GravelRide/VirtualRide/Workout/Strength/Cardio/Walk
 - workouts_apple: workout_id, date, sport_type, distance_mi, duration_min, avg_pace_display, avg_hr_bpm, max_hr_bpm, z1_min, z2_min, z3_min, z4_min, z5_min, elevation_gain_ft, elevation_loss_ft
 - workout_splits: workout_id, date, mile, split_pace_display, split_pace_min_mi, split_distance_mi, split_duration_min, elev_gain_ft, elev_loss_ft, avg_hr_bpm
 - workout_hr_zones: activity_id, date, sport_type, z1_min, z2_min, z3_min, z4_min, z5_min, avg_hr_bpm, max_hr_bpm
 - daily_health: date, active_calories_kcal, resting_hr_bpm, hrv_ms, steps, exercise_time_min
 - daily_nutrition: date, calories_kcal, protein_g, carbs_g, fat_g
-- daily_activity_summary: date, week_start, run_min, ride_min, strength_min, walk_min, z1_min, z2_min, z3_min, z4_min, z5_min, total_calories_kcal, steps
-- personal_records: distance_label, sport, rank, best_time_sec, best_pace_display, achieved_date
+- daily_activity_summary: date, week_start, run_min, ride_min, strength_min, cardio_min, walk_min, z1_min, z2_min, z3_min, z4_min, z5_min, total_calories_kcal, steps
+- personal_records: distance_label, sport, rank, best_time_sec, best_pace_display, achieved_date, distance_m
 - body_composition: date, weight_lb, body_fat_pct, skeletal_muscle_mass_lb, inbody_score, visceral_fat_level
+- performance_tests: id, test_type, value, unit, date, notes
 
-POSTGRESQL DATE RULES - CRITICAL:
-- NEVER use YEAR(), MONTH(), DAY() - these are MySQL not PostgreSQL
+POSTGRESQL DATE RULES:
+- NEVER use YEAR(), MONTH(), DAY() — PostgreSQL only
 - Current year: date >= '2026-01-01'
 - Last 7 days: date >= CURRENT_DATE - INTERVAL '7 days'
-- Last 30 days: date >= CURRENT_DATE - INTERVAL '30 days'
-- Specific month: date >= '2025-11-01' AND date < '2025-12-01'
 - Always add LIMIT
 """
 
@@ -168,13 +167,12 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# ── Pages ─────────────────────────────────────────────────────
 @app.route('/')
 @login_required
 def index():
     return render_template('index.html')
 
-# ── API: Dashboard data ───────────────────────────────────────
+# ── API: Dashboard ────────────────────────────────────────────
 @app.route('/api/dashboard')
 @login_required
 def dashboard():
@@ -184,38 +182,33 @@ def dashboard():
                    inbody_score, visceral_fat_level
             FROM body_composition ORDER BY date DESC LIMIT 1
         """)
-
         activity = run_query("""
-    SELECT date, run_min, ride_min, strength_min, cardio_min, walk_min,
-           z1_min, z2_min, z3_min, z4_min, z5_min,
-           total_calories_kcal, steps
-    FROM daily_activity_summary
-    WHERE date >= CURRENT_DATE - INTERVAL '8 days'
-    ORDER BY date
-""")
-
+            SELECT date, run_min, ride_min, strength_min, cardio_min, walk_min,
+                   z1_min, z2_min, z3_min, z4_min, z5_min,
+                   total_calories_kcal, steps
+            FROM daily_activity_summary
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
+            ORDER BY date
+        """)
         health = run_query("""
             SELECT date, resting_hr_bpm, hrv_ms, steps, active_calories_kcal
             FROM daily_health
             WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date DESC LIMIT 7
         """)
-
         nutrition = run_query("""
             SELECT date, calories_kcal, protein_g, carbs_g, fat_g
             FROM daily_nutrition
             WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date DESC LIMIT 7
         """)
-
         workouts = run_query("""
             SELECT activity_id, date, sport_type, name, moving_time_min, distance_miles, avg_hr
             FROM workouts_strava
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date DESC
         """)
 
-        # Check nutrition logging gaps
         nutrition_dates = {r['date'] for r in (nutrition or [])}
         missing_nutrition = []
         for i in range(7):
@@ -224,6 +217,7 @@ def dashboard():
                 missing_nutrition.append(d)
 
         phase = get_current_phase()
+        phase['days_remaining'] = (date.fromisoformat(phase['end']) - date.today()).days
 
         return jsonify({
             'body_comp':         body[0] if body else None,
@@ -237,6 +231,76 @@ def dashboard():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ── API: Body comp history ────────────────────────────────────
+@app.route('/api/body_comp_history')
+@login_required
+def body_comp_history():
+    try:
+        data = run_query("""
+            SELECT date, weight_lb, body_fat_pct, skeletal_muscle_mass_lb,
+                   inbody_score, visceral_fat_level
+            FROM body_composition ORDER BY date
+        """)
+        return jsonify(data or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── API: Records ──────────────────────────────────────────────
+@app.route('/api/records')
+@login_required
+def records():
+    try:
+        run_prs = run_query("""
+            SELECT distance_label, rank, best_pace_display, best_time_sec, achieved_date
+            FROM personal_records
+            WHERE sport = 'run' AND best_time_sec IS NOT NULL
+            ORDER BY distance_m, rank
+        """)
+        ride_prs = run_query("""
+            SELECT distance_label, rank, best_pace_display, best_time_sec, achieved_date
+            FROM personal_records
+            WHERE sport = 'ride' AND best_time_sec IS NOT NULL
+            ORDER BY distance_m, rank
+        """)
+        return jsonify({'runs': run_prs or [], 'rides': ride_prs or []})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── API: Performance tests ────────────────────────────────────
+@app.route('/api/performance_tests')
+@login_required
+def get_performance_tests():
+    try:
+        data = run_query("""
+            SELECT id, test_type, value, unit, date, notes
+            FROM performance_tests
+            ORDER BY test_type, date
+        """)
+        return jsonify(data or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/performance_tests', methods=['POST'])
+@login_required
+def add_performance_test():
+    try:
+        data = request.json
+        r = requests.post(
+            f'{SUPABASE_URL}/rest/v1/performance_tests',
+            headers={**sb_headers(), 'Prefer': 'return=representation'},
+            json=[{
+                'test_type': data.get('test_type'),
+                'value':     float(data.get('value', 0)),
+                'unit':      data.get('unit', ''),
+                'date':      data.get('date', date.today().isoformat()),
+                'notes':     data.get('notes', '')
+            }]
+        )
+        r.raise_for_status()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ── API: Chat ─────────────────────────────────────────────────
 @app.route('/api/chat', methods=['POST'])
 @login_required
@@ -244,7 +308,6 @@ def chat():
     data     = request.json
     question = data.get('question', '').strip()
     history  = data.get('history', [])
-
     if not question:
         return jsonify({'error': 'No question provided'}), 400
 
@@ -252,10 +315,9 @@ def chat():
         q = question.lower()
         fetched = {}
 
-        # Weekly/recent activity
         if any(w in q for w in ['last week', 'this week', 'training week', 'how was', 'weekly']):
             fetched['weekly_summary'] = run_query("""
-                SELECT date, run_min, ride_min, strength_min, walk_min, cardio_min
+                SELECT date, run_min, ride_min, strength_min, cardio_min, walk_min,
                        z1_min, z2_min, z3_min, z4_min, z5_min,
                        total_calories_kcal, steps
                 FROM daily_activity_summary
@@ -270,7 +332,6 @@ def chat():
                 ORDER BY date
             """)
 
-        # Nutrition
         if any(w in q for w in ['nutrition', 'food', 'eat', 'calorie', 'protein', 'macro', 'diet']):
             fetched['nutrition_recent'] = run_query("""
                 SELECT date, calories_kcal, protein_g, carbs_g, fat_g
@@ -279,7 +340,6 @@ def chat():
                 ORDER BY date DESC LIMIT 30
             """)
 
-        # Body composition
         if any(w in q for w in ['body', 'weight', 'fat', 'muscle', 'composition', 'inbody', 'scan']):
             fetched['body_comp'] = run_query("""
                 SELECT date, weight_lb, body_fat_pct, skeletal_muscle_mass_lb,
@@ -287,7 +347,6 @@ def chat():
                 FROM body_composition ORDER BY date
             """)
 
-        # Cycling / rides
         if any(w in q for w in ['ride', 'cycling', 'bike', 'ms150', 'ms 150', 'longest']):
             fetched['rides'] = run_query("""
                 SELECT date, sport_type, name, distance_miles, moving_time_min,
@@ -298,7 +357,6 @@ def chat():
                 ORDER BY distance_miles DESC LIMIT 15
             """)
 
-        # Running — extended window to cover historical questions
         if any(w in q for w in ['run', 'pace', 'mile', 'marathon', '5k', '10k', 'half',
                                   'november', 'december', 'october', 'january', 'february',
                                   'september', 'august', 'hill', 'split', 'training block']):
@@ -319,7 +377,6 @@ def chat():
                 AND date >= CURRENT_DATE - INTERVAL '18 months'
                 ORDER BY date DESC LIMIT 80
             """)
-            # Include mile splits for hill/pace analysis
             if any(w in q for w in ['hill', 'split', 'mile by mile', 'pace per mile',
                                       'january 11', 'half marathon', 'jan 11']):
                 fetched['splits'] = run_query("""
@@ -331,7 +388,6 @@ def chat():
                     LIMIT 300
                 """)
 
-        # PRs
         if any(w in q for w in ['pr', 'personal record', 'best', 'fastest', 'record']):
             fetched['prs'] = run_query("""
                 SELECT distance_label, sport, rank, best_pace_display,
@@ -341,7 +397,13 @@ def chat():
                 ORDER BY sport, distance_m, rank
             """)
 
-        # HR zones
+        if any(w in q for w in ['kpi', 'ftp', 'pull up', 'push up', 'pullup', 'pushup', 'test', 'performance test']):
+            fetched['performance_tests'] = run_query("""
+                SELECT test_type, value, unit, date, notes
+                FROM performance_tests
+                ORDER BY test_type, date DESC
+            """)
+
         if any(w in q for w in ['zone', 'z2', 'heart rate', 'intensity', 'aerobic']):
             fetched['zone_trends'] = run_query("""
                 SELECT DATE_TRUNC('month', date)::date as month,
@@ -355,8 +417,8 @@ def chat():
                 GROUP BY 1 ORDER BY 1
             """)
 
-        # Overtraining / recovery / training load
-        if any(w in q for w in ['overtrain', 'recover', 'tired', 'hrv', 'resting hr', 'fatigue', 'atl', 'ctl', 'tsb', 'training load', 'fitness', 'form', 'fresh']):
+        if any(w in q for w in ['overtrain', 'recover', 'tired', 'hrv', 'resting hr',
+                                  'fatigue', 'atl', 'ctl', 'tsb', 'training load', 'fitness', 'form', 'fresh']):
             fetched['health_trend'] = run_query("""
                 SELECT date, resting_hr_bpm, hrv_ms, steps, active_calories_kcal
                 FROM daily_health
@@ -367,8 +429,8 @@ def chat():
                 SELECT week_start,
                        ROUND(SUM(run_min)::numeric, 0) run_min,
                        ROUND(SUM(ride_min)::numeric, 0) ride_min,
-                       ROUND(SUM(cardo_min)::numeric, 0) cardio_min,
                        ROUND(SUM(strength_min)::numeric, 0) strength_min,
+                       ROUND(SUM(cardio_min)::numeric, 0) cardio_min,
                        ROUND(SUM(z2_min)::numeric, 0) z2_min,
                        ROUND(SUM(z3_min+z4_min+z5_min)::numeric, 0) high_intensity_min
                 FROM daily_activity_summary
@@ -376,14 +438,13 @@ def chat():
                 GROUP BY week_start ORDER BY week_start
             """)
 
-        # Recommendations / focus
         if any(w in q for w in ['focus', 'recommend', 'should i', 'what should', 'plan', 'this week']):
             fetched['weekly_load'] = run_query("""
                 SELECT week_start,
                        ROUND(SUM(run_min)::numeric, 0) run_min,
                        ROUND(SUM(ride_min)::numeric, 0) ride_min,
-                       ROUND(SUM(cardio_min)::numeric, 0) cardio_min,
-                       ROUND(SUM(strength_min)::numeric, 0) strength_min
+                       ROUND(SUM(strength_min)::numeric, 0) strength_min,
+                       ROUND(SUM(cardio_min)::numeric, 0) cardio_min
                 FROM daily_activity_summary
                 WHERE date >= CURRENT_DATE - INTERVAL '4 weeks'
                 GROUP BY week_start ORDER BY week_start
@@ -395,24 +456,21 @@ def chat():
                 ORDER BY date DESC
             """)
 
-        # Default fallback
         if not fetched:
             fetched['weekly_summary'] = run_query("""
-                SELECT date, run_min, ride_min, strength_min, walk_min, cardio_min,
+                SELECT date, run_min, ride_min, strength_min, cardio_min, walk_min,
                        z2_min, total_calories_kcal
                 FROM daily_activity_summary
                 WHERE date >= CURRENT_DATE - INTERVAL '7 days'
                 ORDER BY date
             """)
 
-        # Build data string
         data_str = '\n\n'.join(
             f'## {k}\n{json.dumps(v, default=str)}'
             for k, v in fetched.items()
         )
 
         phase = get_current_phase()
-
         system = f"""{ATHLETE_CONTEXT}
 
 CURRENT PHASE: {phase['name']}
@@ -428,38 +486,22 @@ COACHING RULES:
 - Always frame answers through the lens of the current phase goal.
 - Flag concerns clearly: overtraining, under-eating, insufficient protein, too much high intensity.
 - For body comp phase: prioritize body fat and muscle mass trends over performance metrics.
-- For hill analysis: use elev_gain_ft and pace from workout_splits to show how pace changed on climbs.
-- Reference actual data values in your answer.
+- For hill analysis: use elev_gain_ft and pace from workout_splits.
 - Keep answers focused: 150-300 words unless a detailed plan is requested.
 """
-
-        # Build messages with conversation history
         messages = []
         for h in history[-6:]:
             messages.append({'role': h['role'], 'content': h['content']})
-        messages.append({
-            'role': 'user',
-            'content': f'Question: {question}\n\nRelevant data:\n{data_str}'
-        })
+        messages.append({'role': 'user', 'content': f'Question: {question}\n\nRelevant data:\n{data_str}'})
 
         r = requests.post(
             'https://api.anthropic.com/v1/messages',
-            headers={
-                'Content-Type': 'application/json',
-                'x-api-key': ANTHROPIC_KEY,
-                'anthropic-version': '2023-06-01'
-            },
-            json={
-                'model': 'claude-sonnet-4-20250514',
-                'max_tokens': 1000,
-                'system': system,
-                'messages': messages
-            },
+            headers={'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01'},
+            json={'model': 'claude-sonnet-4-20250514', 'max_tokens': 1000, 'system': system, 'messages': messages},
             timeout=30
         )
         r.raise_for_status()
         answer = ''.join(b.get('text', '') for b in r.json().get('content', []))
-
         return jsonify({'answer': answer, 'queries_run': list(fetched.keys())})
 
     except Exception as e:
@@ -475,27 +517,25 @@ def weekly_report():
                    ROUND(SUM(run_min)::numeric, 0) run_min,
                    ROUND(SUM(ride_min)::numeric, 0) ride_min,
                    ROUND(SUM(strength_min)::numeric, 0) strength_min,
+                   ROUND(SUM(cardio_min)::numeric, 0) cardio_min,
                    ROUND(SUM(z2_min)::numeric, 0) z2_min,
                    ROUND(SUM(z3_min+z4_min+z5_min)::numeric, 0) high_min
             FROM daily_activity_summary
             WHERE date >= CURRENT_DATE - INTERVAL '8 weeks'
             GROUP BY week_start ORDER BY week_start
         """)
-
         nutrition = run_query("""
             SELECT date, calories_kcal, protein_g
             FROM daily_nutrition
             WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date
         """)
-
         health = run_query("""
             SELECT date, resting_hr_bpm, hrv_ms
             FROM daily_health
             WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date
         """)
-
         body = run_query("""
             SELECT date, weight_lb, body_fat_pct, skeletal_muscle_mass_lb
             FROM body_composition ORDER BY date DESC LIMIT 2
@@ -508,27 +548,22 @@ def weekly_report():
             f'## health_week\n{json.dumps(health, default=str)}\n\n'
             f'## body_comp\n{json.dumps(body, default=str)}'
         )
-
         system = f"""{ATHLETE_CONTEXT}
-
 CURRENT PHASE: {phase['name']}
 Phase goal: {phase['goal']}
 
-Generate a concise weekly training report with these sections:
+Generate a concise weekly training report:
 1. Week summary (volume, intensity balance)
-2. Body composition update (if scan data available)
+2. Body composition update
 3. Nutrition check (calories, protein adequacy)
 4. Recovery status (HRV, resting HR)
 5. Top concern or highlight
 6. 3 specific recommendations for next week
 
-Be direct. Use actual numbers. Flag any concerns clearly.
-Keep total length under 400 words.
-"""
+Be direct. Use actual numbers. Under 400 words."""
 
         report = claude(system, f'Generate weekly report.\n\nData:\n{data_str}', max_tokens=800)
         return jsonify({'report': report, 'phase': phase})
-
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -538,145 +573,115 @@ Keep total length under 400 words.
 def zone_goals():
     try:
         recent_zones = run_query("""
-            SELECT
-                ROUND(SUM(z1_min)::numeric, 0) total_z1,
-                ROUND(SUM(z2_min)::numeric, 0) total_z2,
-                ROUND(SUM(z3_min)::numeric, 0) total_z3,
-                ROUND(SUM(z4_min)::numeric, 0) total_z4,
-                ROUND(SUM(z5_min)::numeric, 0) total_z5
-            FROM daily_activity_summary
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            SELECT ROUND(SUM(z1_min)::numeric,0) total_z1, ROUND(SUM(z2_min)::numeric,0) total_z2,
+                   ROUND(SUM(z3_min)::numeric,0) total_z3, ROUND(SUM(z4_min)::numeric,0) total_z4,
+                   ROUND(SUM(z5_min)::numeric,0) total_z5
+            FROM daily_activity_summary WHERE date >= CURRENT_DATE - INTERVAL '7 days'
         """)
-
         four_week = run_query("""
-            SELECT week_start,
-                ROUND(SUM(z1_min)::numeric, 0) z1,
-                ROUND(SUM(z2_min)::numeric, 0) z2,
-                ROUND(SUM(z3_min)::numeric, 0) z3,
-                ROUND(SUM(z4_min)::numeric, 0) z4,
-                ROUND(SUM(z5_min)::numeric, 0) z5
-            FROM daily_activity_summary
-            WHERE date >= CURRENT_DATE - INTERVAL '4 weeks'
+            SELECT week_start, ROUND(SUM(z1_min)::numeric,0) z1, ROUND(SUM(z2_min)::numeric,0) z2,
+                   ROUND(SUM(z3_min)::numeric,0) z3, ROUND(SUM(z4_min)::numeric,0) z4, ROUND(SUM(z5_min)::numeric,0) z5
+            FROM daily_activity_summary WHERE date >= CURRENT_DATE - INTERVAL '4 weeks'
             GROUP BY week_start ORDER BY week_start
         """)
-
         phase = get_current_phase()
-
         prompt = f"""{ATHLETE_CONTEXT}
-
 CURRENT PHASE: {phase['name']}
 Phase goal: {phase['goal']}
-
-RECENT ZONE DATA:
-Last 7 days totals: {json.dumps(recent_zones, default=str)}
-Last 4 weeks by week: {json.dumps(four_week, default=str)}
-
-Based on the athlete's current phase, goals, and recent zone distribution, recommend weekly target minutes for each HR zone.
-
-Respond with ONLY a valid JSON object, no other text:
-{{"z1": <minutes>, "z2": <minutes>, "z3": <minutes>, "z4": <minutes>, "z5": <minutes>, "rationale": "<one sentence>"}}
-
-Body comp phase: prioritize Z2 for fat burning, minimize Z4/Z5 to protect muscle. Base targets on current actual volumes — don't set unrealistic jumps."""
-
+Last 7 days: {json.dumps(recent_zones, default=str)}
+Last 4 weeks: {json.dumps(four_week, default=str)}
+Recommend weekly target minutes for each HR zone. Body comp phase: prioritize Z2, minimize Z4/Z5.
+Respond with ONLY valid JSON: {{"z1":<min>,"z2":<min>,"z3":<min>,"z4":<min>,"z5":<min>,"rationale":"<one sentence>"}}"""
         text  = claude('', prompt, max_tokens=200)
         match = re.search(r'\{.*\}', text, re.DOTALL)
         if match:
             return jsonify(json.loads(match.group()))
-        raise ValueError('No JSON in response')
-
+        raise ValueError('No JSON')
     except Exception as e:
-        return jsonify({
-            'z1': 60, 'z2': 180, 'z3': 45, 'z4': 20, 'z5': 10,
-            'rationale': 'Default targets for body composition phase — prioritize Z2 aerobic work.'
-        })
+        return jsonify({'z1':60,'z2':180,'z3':45,'z4':20,'z5':10,
+                       'rationale':'Default targets for body composition phase.'})
 
-
-# ── API: ATL/CTL/TSB ─────────────────────────────────────────
+# ── API: Training load ────────────────────────────────────────
 @app.route('/api/training_load')
 @login_required
 def training_load():
     try:
-        # Fetch 90 days of activity data for ATL/CTL calculation
-        # CTL needs 42-day window, add buffer
         activities = run_query("""
             SELECT date,
-                   COALESCE(run_min, 0) + COALESCE(ride_min, 0) +
-                   COALESCE(strength_min, 0) + COALESCE(walk_min, 0) AS total_min,
-                   COALESCE(z1_min, 0) AS z1_min,
-                   COALESCE(z2_min, 0) AS z2_min,
-                   COALESCE(z3_min, 0) AS z3_min,
-                   COALESCE(z4_min, 0) AS z4_min,
-                   COALESCE(z5_min, 0) AS z5_min
+                   COALESCE(run_min,0)+COALESCE(ride_min,0)+COALESCE(strength_min,0)+
+                   COALESCE(cardio_min,0)+COALESCE(walk_min,0) AS total_min,
+                   COALESCE(z1_min,0) z1_min, COALESCE(z2_min,0) z2_min,
+                   COALESCE(z3_min,0) z3_min, COALESCE(z4_min,0) z4_min,
+                   COALESCE(z5_min,0) z5_min
             FROM daily_activity_summary
             WHERE date >= CURRENT_DATE - INTERVAL '90 days'
             ORDER BY date
         """)
-
         if not activities:
             return jsonify({'data': [], 'current': {}})
 
-        # Calculate TSS per day using HR zones
-        # TSS = duration_hrs * intensity_factor^2 * 100
-        # Intensity factors by zone (relative to threshold):
-        # Z1=0.55, Z2=0.72, Z3=0.87, Z4=0.98, Z5=1.10
-        IF = {'z1': 0.55, 'z2': 0.72, 'z3': 0.87, 'z4': 0.98, 'z5': 1.10}
-
+        IF = {'z1':0.55,'z2':0.72,'z3':0.87,'z4':0.98,'z5':1.10}
         def calc_tss(row):
-            total = 0
-            for z, factor in IF.items():
-                mins = row.get(f'{z}_min', 0) or 0
-                hrs = mins / 60
-                total += hrs * (factor ** 2) * 100
-            # If no zone data but has total time, use moderate intensity estimate
-            if total == 0 and row.get('total_min', 0) > 0:
-                total = (row['total_min'] / 60) * (0.65 ** 2) * 100
+            total = sum((row.get(f'{z}_min',0) or 0)/60*(f**2)*100 for z,f in IF.items())
+            if total == 0 and row.get('total_min',0) > 0:
+                total = (row['total_min']/60)*(0.65**2)*100
             return round(total, 1)
 
-        # Build daily TSS list
-        tss_by_date = {}
-        for row in activities:
-            tss_by_date[row['date']] = calc_tss(row)
-
-        # Fill in all dates in range (rest days = 0 TSS)
-        from datetime import timedelta
+        tss_by_date = {r['date']: calc_tss(r) for r in activities}
         start = date.today() - timedelta(days=89)
-        all_dates = []
-        d = start
+        all_dates, d = [], start
         while d <= date.today():
             all_dates.append(d.isoformat())
             d += timedelta(days=1)
 
-        # Calculate ATL (7-day) and CTL (42-day) using exponential weighted average
-        atl_decay = 1 - (1 / 7)   # 7-day time constant
-        ctl_decay = 1 - (1 / 42)  # 42-day time constant
-
-        atl = 0.0
-        ctl = 0.0
+        atl = ctl = 0.0
+        atl_decay, ctl_decay = 1-(1/7), 1-(1/42)
         results = []
-
         for d_str in all_dates:
             tss = tss_by_date.get(d_str, 0)
-            atl = atl * atl_decay + tss * (1 - atl_decay)
-            ctl = ctl * ctl_decay + tss * (1 - ctl_decay)
-            tsb = ctl - atl
+            atl = atl*atl_decay + tss*(1-atl_decay)
+            ctl = ctl*ctl_decay + tss*(1-ctl_decay)
+            results.append({'date':d_str,'tss':round(tss,1),'atl':round(atl,1),'ctl':round(ctl,1),'tsb':round(ctl-atl,1)})
 
-            results.append({
-                'date': d_str,
-                'tss': round(tss, 1),
-                'atl': round(atl, 1),
-                'ctl': round(ctl, 1),
-                'tsb': round(tsb, 1)
-            })
+        return jsonify({'data': results[-60:], 'current': results[-1] if results else {}})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-        # Only return last 60 days for the chart
-        chart_data = results[-60:]
-        current = results[-1] if results else {}
-
-        return jsonify({
-            'data': chart_data,
-            'current': current
-        })
-
+# ── API: Workout detail ───────────────────────────────────────
+@app.route('/api/workout/<activity_id>')
+@login_required
+def workout_detail(activity_id):
+    try:
+        activity = run_query(f"""
+            SELECT activity_id, date, sport_type, name, distance_miles,
+                   moving_time_min, avg_hr, max_hr, calories, total_elevation_gain_m
+            FROM workouts_strava WHERE activity_id::text = '{str(activity_id)}' LIMIT 1
+        """)
+        if not activity:
+            return jsonify({'error': 'Activity not found'}), 404
+        act = activity[0]
+        zones = run_query(f"""
+            SELECT z1_min, z2_min, z3_min, z4_min, z5_min, avg_hr_bpm, max_hr_bpm
+            FROM workout_hr_zones WHERE activity_id = {int(activity_id)} LIMIT 1
+        """)
+        splits, apple = [], []
+        if act['sport_type'] == 'Run':
+            apple = run_query(f"""
+                SELECT workout_id, distance_mi, avg_pace_display, avg_pace_min_mi,
+                       avg_hr_bpm, max_hr_bpm, elevation_gain_ft, elevation_loss_ft,
+                       z1_min, z2_min, z3_min, z4_min, z5_min
+                FROM workouts_apple
+                WHERE date = '{act['date']}' AND sport_type ILIKE '%run%'
+                ORDER BY ABS(distance_mi - {float(act['distance_miles'] or 0)}) LIMIT 1
+            """)
+            if apple:
+                splits = run_query(f"""
+                    SELECT mile, split_pace_display, split_pace_min_mi,
+                           split_distance_mi, split_duration_min,
+                           elev_gain_ft, elev_loss_ft, avg_hr_bpm
+                    FROM workout_splits WHERE workout_id = '{apple[0]['workout_id']}' ORDER BY mile
+                """)
+        return jsonify({'activity':act,'zones':zones[0] if zones else None,'splits':splits or [],'apple':apple[0] if apple else None})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -688,74 +693,11 @@ def phases():
     result = []
     for p in PHASES:
         ph = dict(p)
-        ph['is_current']      = p['start'] <= today <= p['end']
-        ph['days_remaining']  = (date.fromisoformat(p['end']) - date.today()).days
+        ph['is_current']     = p['start'] <= today <= p['end']
+        ph['days_remaining'] = (date.fromisoformat(p['end']) - date.today()).days
         result.append(ph)
     return jsonify(result)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=False)
-
-# ── API: Workout detail ───────────────────────────────────────
-@app.route('/api/workout/<activity_id>')
-@login_required
-def workout_detail(activity_id):
-    try:
-        # Main activity from Strava
-        activity = run_query(f"""
-            SELECT s.activity_id, s.date, s.sport_type, s.name,
-                   s.distance_miles, s.moving_time_min, s.avg_hr, s.max_hr,
-                   s.calories, s.total_elevation_gain_m
-            FROM workouts_strava s
-            WHERE s.activity_id::text = '{str(activity_id)}'
-            LIMIT 1
-        """)
-
-        if not activity:
-            return jsonify({'error': 'Activity not found'}), 404
-
-        act = activity[0]
-
-        # HR zones from workout_hr_zones
-        zones = run_query(f"""
-            SELECT z1_min, z2_min, z3_min, z4_min, z5_min,
-                   avg_hr_bpm, max_hr_bpm
-            FROM workout_hr_zones
-            WHERE activity_id = {int(activity_id)}
-            LIMIT 1
-        """)
-
-        # Mile splits from workout_splits (match by date for runs)
-        splits = []
-        apple = []
-        if act['sport_type'] == 'Run':
-            apple = run_query(f"""
-                SELECT workout_id, distance_mi, avg_pace_display, avg_pace_min_mi,
-                       avg_hr_bpm, max_hr_bpm, elevation_gain_ft, elevation_loss_ft,
-                       z1_min, z2_min, z3_min, z4_min, z5_min
-                FROM workouts_apple
-                WHERE date = '{act['date']}'
-                AND sport_type ILIKE '%run%'
-                LIMIT 1
-            """)
-
-            if apple:
-                splits = run_query(f"""
-                    SELECT mile, split_pace_display, split_pace_min_mi,
-                           split_distance_mi, split_duration_min,
-                           elev_gain_ft, elev_loss_ft, avg_hr_bpm
-                    FROM workout_splits
-                    WHERE workout_id = '{apple[0]['workout_id']}'
-                    ORDER BY mile
-                """)
-
-        return jsonify({
-            'activity': act,
-            'zones':    zones[0] if zones else None,
-            'splits':   splits or [],
-            'apple':    apple[0] if apple else None
-        })
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
