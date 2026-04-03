@@ -186,13 +186,13 @@ def dashboard():
         """)
 
         activity = run_query("""
-            SELECT date, run_min, ride_min, strength_min, walk_min,
-                   z1_min, z2_min, z3_min, z4_min, z5_min,
-                   total_calories_kcal, steps
-            FROM daily_activity_summary
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-            ORDER BY date
-        """)
+    SELECT date, run_min, ride_min, strength_min, cardio_min, walk_min,
+           z1_min, z2_min, z3_min, z4_min, z5_min,
+           total_calories_kcal, steps
+    FROM daily_activity_summary
+    WHERE date >= CURRENT_DATE - INTERVAL '8 days'
+    ORDER BY date
+""")
 
         health = run_query("""
             SELECT date, resting_hr_bpm, hrv_ms, steps, active_calories_kcal
