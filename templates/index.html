@@ -215,6 +215,7 @@ nav button.active { color: var(--gold); background: #1a1500; }
 .bar.ride { background: #c8a96e; }
 .bar.strength { background: #4a6fa5; }
 .bar.walk { background: #666; }
+.bar.cardio { background: #7a4a8a; }
 .day-total { font-size: 10px; color: var(--dim); width: 36px; text-align: right; flex-shrink: 0; }
 
 
@@ -650,10 +651,11 @@ async function loadDashboard() {
         acc.run += day.run_min || 0;
         acc.ride += day.ride_min || 0;
         acc.strength += day.strength_min || 0;
+        acc.cardio += day.cardio_min || 0;
         acc.z2 += day.z2_min || 0;
         acc.cal += day.total_calories_kcal || 0;
         return acc;
-      }, { run: 0, ride: 0, strength: 0, z2: 0, cal: 0 });
+      }, { run: 0, ride: 0, strength: 0, cardio: 0, z2: 0, cal: 0 });
 
       document.getElementById('activity-cards').innerHTML = `
         <div class="card">
@@ -668,6 +670,10 @@ async function loadDashboard() {
           <div class="label">Strength</div>
           <div class="value">${Math.round(totals.strength)}<span class="unit">min</span></div>
         </div>
+        <div class="card">
+          <div class="label">Cardio</div>
+          <div class="value">${Math.round(totals.cardio)}<span class="unit">min</span></div>
+        </div>
         <div class="card good">
           <div class="label">Z2 Time</div>
           <div class="value">${Math.round(totals.z2)}<span class="unit">min</span></div>
@@ -675,7 +681,7 @@ async function loadDashboard() {
       `;
 
       // Day bars
-      const maxMin = Math.max(...d.activity.map(a => (a.run_min||0)+(a.ride_min||0)+(a.strength_min||0)+(a.walk_min||0)), 1);
+      const maxMin = Math.max(...d.activity.map(a => (a.run_min||0)+(a.ride_min||0)+(a.strength_min||0)+(a.cardio_min||0)+(a.walk_min||0)), 1);
       // Store workouts indexed by date globally for click handlers
       window.workoutsByDate = {};
       (d.workouts || []).forEach(w => {
@@ -685,7 +691,7 @@ async function loadDashboard() {
 
       const chart = document.getElementById('week-chart');
       chart.innerHTML = d.activity.map(day => {
-        const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.walk_min||0);
+        const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
         const pct = v => Math.round(v / maxMin * 100);
         const dayLabel = new Date(day.date).toLocaleDateString('en-US', {weekday:'short'});
         const hasWorkouts = window.workoutsByDate[day.date] && window.workoutsByDate[day.date].length > 0;
@@ -697,6 +703,7 @@ async function loadDashboard() {
             ${day.run_min > 0 ? `<div class="bar run" style="width:${pct(day.run_min)}%" title="Run: ${Math.round(day.run_min)}min"></div>` : ''}
             ${day.ride_min > 0 ? `<div class="bar ride" style="width:${pct(day.ride_min)}%" title="Ride: ${Math.round(day.ride_min)}min"></div>` : ''}
             ${day.strength_min > 0 ? `<div class="bar strength" style="width:${pct(day.strength_min)}%" title="Strength: ${Math.round(day.strength_min)}min"></div>` : ''}
+            ${day.cardio_min > 0 ? `<div class="bar cardio" style="width:${pct(day.cardio_min)}%" title="Cardio: ${Math.round(day.cardio_min)}min"></div>` : ''}
             ${day.walk_min > 0 ? `<div class="bar walk" style="width:${pct(day.walk_min)}%" title="Walk: ${Math.round(day.walk_min)}min"></div>` : ''}
           </div>
           <div class="day-total">${Math.round(total) > 0 ? Math.round(total)+'m' : ''}</div>
@@ -1016,8 +1023,8 @@ document.addEventListener('keydown', e => {
 // ── Render clickable workout rows ─────────────────────────────
 function renderWorkoutRows(workouts) {
   if (!workouts || !workouts.length) return '<div style="color:var(--dim);font-size:12px">No workouts this week</div>';
-  const icons = { Run:'🏃', Ride:'🚴', GravelRide:'🚴', VirtualRide:'🚴', Workout:'💪', Walk:'🚶', Hike:'🥾' };
-  const colors = { Run:'#4a7c59', Ride:'#c8a96e', GravelRide:'#c8a96e', VirtualRide:'#c8a96e', Workout:'#4a6fa5', Walk:'#666', Hike:'#666' };
+  const icons = { Run:'🏃', Ride:'🚴', GravelRide:'🚴', VirtualRide:'🚴', Workout:'💪', Strength:'💪', Cardio:'🏋️', Walk:'🚶', Hike:'🥾' };
+  const colors = { Run:'#4a7c59', Ride:'#c8a96e', GravelRide:'#c8a96e', VirtualRide:'#c8a96e', Workout:'#4a6fa5', Strength:'#4a6fa5', Cardio:'#7a4a8a', Walk:'#666', Hike:'#666' };
   return workouts.filter(w => w.activity_id).map(w => {
     const icon  = icons[w.sport_type] || '⚡';
     const color = colors[w.sport_type] || '#555';
