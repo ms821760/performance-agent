@@ -324,14 +324,20 @@ def chat():
                 WHERE date >= CURRENT_DATE - INTERVAL '7 days'
                 ORDER BY date
             """)
-            fetched['workouts_week'] = run_query("""
-                SELECT date, sport_type, name, moving_time_min,
-                       distance_miles, avg_hr, calories
-                FROM workouts_strava
-                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-                ORDER BY date
-            """)
-
+            # Always include month-to-date for context
+fetched['month_to_date'] = run_query("""
+    SELECT 
+        COUNT(*) as workout_count,
+        ROUND(SUM(run_min)::numeric,0) run_min,
+        ROUND(SUM(ride_min)::numeric,0) ride_min,
+        ROUND(SUM(strength_min)::numeric,0) strength_min,
+        ROUND(SUM(cardio_min)::numeric,0) cardio_min,
+        ROUND(SUM(z2_min)::numeric,0) z2_min,
+        ROUND(SUM(z3_min+z4_min+z5_min)::numeric,0) high_intensity_min
+    FROM daily_activity_summary
+    WHERE date >= DATE_TRUNC('month', CURRENT_DATE)
+""")
+          
         if any(w in q for w in ['nutrition', 'food', 'eat', 'calorie', 'protein', 'macro', 'diet']):
             fetched['nutrition_recent'] = run_query("""
                 SELECT date, calories_kcal, protein_g, carbs_g, fat_g
