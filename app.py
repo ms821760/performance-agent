@@ -76,6 +76,9 @@ KEY COACHING RULES:
 - Excessive Z4/Z5 during body comp phase risks muscle catabolism
 - Watch HRV and resting HR trends for overtraining signs
 - Nutrition tracking reminder: flag days with no nutrition log
+- DATA WINDOWS: weekly_summary = last 7 days, month_to_date = from 1st of current month to today.
+  NEVER say "this month" based only on 7-day data. Always use month_to_date for monthly statements.
+  If the month just started and month_to_date only covers a few days, say so explicitly.
 """
 
 DB_SCHEMA = """
@@ -95,6 +98,7 @@ POSTGRESQL DATE RULES:
 - NEVER use YEAR(), MONTH(), DAY() — PostgreSQL only
 - Current year: date >= '2026-01-01'
 - Last 7 days: date >= CURRENT_DATE - INTERVAL '7 days'
+- Month to date: date >= DATE_TRUNC('month', CURRENT_DATE)
 - Always add LIMIT
 """
 
@@ -315,6 +319,24 @@ def chat():
         q = question.lower()
         fetched = {}
 
+        # ── Always fetch month-to-date for context ────────────
+        fetched['month_to_date'] = run_query("""
+            SELECT
+                DATE_TRUNC('month', CURRENT_DATE)::date AS month_start,
+                CURRENT_DATE AS through_date,
+                COUNT(DISTINCT date) AS days_with_activity,
+                ROUND(SUM(run_min)::numeric, 0) run_min,
+                ROUND(SUM(ride_min)::numeric, 0) ride_min,
+                ROUND(SUM(strength_min)::numeric, 0) strength_min,
+                ROUND(SUM(cardio_min)::numeric, 0) cardio_min,
+                ROUND(SUM(z2_min)::numeric, 0) z2_min,
+                ROUND(SUM(z3_min+z4_min+z5_min)::numeric, 0) high_intensity_min,
+                ROUND(SUM(total_calories_kcal)::numeric, 0) total_calories
+            FROM daily_activity_summary
+            WHERE date >= DATE_TRUNC('month', CURRENT_DATE)
+        """)
+
+        # ── Weekly/recent activity ────────────────────────────
         if any(w in q for w in ['last week', 'this week', 'training week', 'how was', 'weekly']):
             fetched['weekly_summary'] = run_query("""
                 SELECT date, run_min, ride_min, strength_min, cardio_min, walk_min,
@@ -324,20 +346,15 @@ def chat():
                 WHERE date >= CURRENT_DATE - INTERVAL '7 days'
                 ORDER BY date
             """)
-            # Always include month-to-date for context
-fetched['month_to_date'] = run_query("""
-    SELECT 
-        COUNT(*) as workout_count,
-        ROUND(SUM(run_min)::numeric,0) run_min,
-        ROUND(SUM(ride_min)::numeric,0) ride_min,
-        ROUND(SUM(strength_min)::numeric,0) strength_min,
-        ROUND(SUM(cardio_min)::numeric,0) cardio_min,
-        ROUND(SUM(z2_min)::numeric,0) z2_min,
-        ROUND(SUM(z3_min+z4_min+z5_min)::numeric,0) high_intensity_min
-    FROM daily_activity_summary
-    WHERE date >= DATE_TRUNC('month', CURRENT_DATE)
-""")
-          
+            fetched['workouts_week'] = run_query("""
+                SELECT date, sport_type, name, moving_time_min,
+                       distance_miles, avg_hr, calories
+                FROM workouts_strava
+                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+                ORDER BY date
+            """)
+
+        # ── Nutrition ─────────────────────────────────────────
         if any(w in q for w in ['nutrition', 'food', 'eat', 'calorie', 'protein', 'macro', 'diet']):
             fetched['nutrition_recent'] = run_query("""
                 SELECT date, calories_kcal, protein_g, carbs_g, fat_g
@@ -346,6 +363,7 @@ fetched['month_to_date'] = run_query("""
                 ORDER BY date DESC LIMIT 30
             """)
 
+        # ── Body composition ──────────────────────────────────
         if any(w in q for w in ['body', 'weight', 'fat', 'muscle', 'composition', 'inbody', 'scan']):
             fetched['body_comp'] = run_query("""
                 SELECT date, weight_lb, body_fat_pct, skeletal_muscle_mass_lb,
@@ -353,6 +371,7 @@ fetched['month_to_date'] = run_query("""
                 FROM body_composition ORDER BY date
             """)
 
+        # ── Cycling / rides ───────────────────────────────────
         if any(w in q for w in ['ride', 'cycling', 'bike', 'ms150', 'ms 150', 'longest']):
             fetched['rides'] = run_query("""
                 SELECT date, sport_type, name, distance_miles, moving_time_min,
@@ -363,6 +382,7 @@ fetched['month_to_date'] = run_query("""
                 ORDER BY distance_miles DESC LIMIT 15
             """)
 
+        # ── Running ───────────────────────────────────────────
         if any(w in q for w in ['run', 'pace', 'mile', 'marathon', '5k', '10k', 'half',
                                   'november', 'december', 'october', 'january', 'february',
                                   'september', 'august', 'hill', 'split', 'training block']):
@@ -394,6 +414,7 @@ fetched['month_to_date'] = run_query("""
                     LIMIT 300
                 """)
 
+        # ── PRs ───────────────────────────────────────────────
         if any(w in q for w in ['pr', 'personal record', 'best', 'fastest', 'record']):
             fetched['prs'] = run_query("""
                 SELECT distance_label, sport, rank, best_pace_display,
@@ -403,13 +424,16 @@ fetched['month_to_date'] = run_query("""
                 ORDER BY sport, distance_m, rank
             """)
 
-        if any(w in q for w in ['kpi', 'ftp', 'pull up', 'push up', 'pullup', 'pushup', 'test', 'performance test']):
+        # ── Performance tests / KPIs ──────────────────────────
+        if any(w in q for w in ['kpi', 'ftp', 'pull up', 'push up', 'pullup', 'pushup',
+                                  'test', 'performance test', 'dip', 'plank']):
             fetched['performance_tests'] = run_query("""
                 SELECT test_type, value, unit, date, notes
                 FROM performance_tests
                 ORDER BY test_type, date DESC
             """)
 
+        # ── HR zones ─────────────────────────────────────────
         if any(w in q for w in ['zone', 'z2', 'heart rate', 'intensity', 'aerobic']):
             fetched['zone_trends'] = run_query("""
                 SELECT DATE_TRUNC('month', date)::date as month,
@@ -423,8 +447,10 @@ fetched['month_to_date'] = run_query("""
                 GROUP BY 1 ORDER BY 1
             """)
 
+        # ── Overtraining / recovery ───────────────────────────
         if any(w in q for w in ['overtrain', 'recover', 'tired', 'hrv', 'resting hr',
-                                  'fatigue', 'atl', 'ctl', 'tsb', 'training load', 'fitness', 'form', 'fresh']):
+                                  'fatigue', 'atl', 'ctl', 'tsb', 'training load',
+                                  'fitness', 'form', 'fresh']):
             fetched['health_trend'] = run_query("""
                 SELECT date, resting_hr_bpm, hrv_ms, steps, active_calories_kcal
                 FROM daily_health
@@ -444,6 +470,7 @@ fetched['month_to_date'] = run_query("""
                 GROUP BY week_start ORDER BY week_start
             """)
 
+        # ── Recommendations / focus ───────────────────────────
         if any(w in q for w in ['focus', 'recommend', 'should i', 'what should', 'plan', 'this week']):
             fetched['weekly_load'] = run_query("""
                 SELECT week_start,
@@ -462,13 +489,36 @@ fetched['month_to_date'] = run_query("""
                 ORDER BY date DESC
             """)
 
-        if not fetched:
+        # ── Month/time period questions ───────────────────────
+        if any(w in q for w in ['this month', 'month', 'april', 'march', 'february',
+                                  'january', 'year so far', 'this year']):
+            fetched['monthly_breakdown'] = run_query("""
+                SELECT DATE_TRUNC('month', date)::date as month,
+                       ROUND(SUM(run_min)::numeric, 0) run_min,
+                       ROUND(SUM(ride_min)::numeric, 0) ride_min,
+                       ROUND(SUM(strength_min)::numeric, 0) strength_min,
+                       ROUND(SUM(cardio_min)::numeric, 0) cardio_min,
+                       ROUND(SUM(z2_min)::numeric, 0) z2_min,
+                       COUNT(DISTINCT date) days_active
+                FROM daily_activity_summary
+                WHERE date >= '2026-01-01'
+                GROUP BY 1 ORDER BY 1
+            """)
+
+        # ── Default fallback (always have something) ──────────
+        if len(fetched) <= 1:  # only month_to_date
             fetched['weekly_summary'] = run_query("""
                 SELECT date, run_min, ride_min, strength_min, cardio_min, walk_min,
                        z2_min, total_calories_kcal
                 FROM daily_activity_summary
                 WHERE date >= CURRENT_DATE - INTERVAL '7 days'
                 ORDER BY date
+            """)
+            fetched['recent_workouts'] = run_query("""
+                SELECT date, sport_type, name, moving_time_min, distance_miles, avg_hr
+                FROM workouts_strava
+                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+                ORDER BY date DESC
             """)
 
         data_str = '\n\n'.join(
@@ -493,6 +543,9 @@ COACHING RULES:
 - Flag concerns clearly: overtraining, under-eating, insufficient protein, too much high intensity.
 - For body comp phase: prioritize body fat and muscle mass trends over performance metrics.
 - For hill analysis: use elev_gain_ft and pace from workout_splits.
+- month_to_date covers from the 1st of the current month to today ({TODAY}).
+  If only a few days into the month, acknowledge that explicitly — don't extrapolate.
+  Never use the 7-day weekly_summary to make monthly statements.
 - Keep answers focused: 150-300 words unless a detailed plan is requested.
 """
         messages = []
@@ -586,7 +639,8 @@ def zone_goals():
         """)
         four_week = run_query("""
             SELECT week_start, ROUND(SUM(z1_min)::numeric,0) z1, ROUND(SUM(z2_min)::numeric,0) z2,
-                   ROUND(SUM(z3_min)::numeric,0) z3, ROUND(SUM(z4_min)::numeric,0) z4, ROUND(SUM(z5_min)::numeric,0) z5
+                   ROUND(SUM(z3_min)::numeric,0) z3, ROUND(SUM(z4_min)::numeric,0) z4,
+                   ROUND(SUM(z5_min)::numeric,0) z5
             FROM daily_activity_summary WHERE date >= CURRENT_DATE - INTERVAL '4 weeks'
             GROUP BY week_start ORDER BY week_start
         """)
@@ -647,7 +701,8 @@ def training_load():
             tss = tss_by_date.get(d_str, 0)
             atl = atl*atl_decay + tss*(1-atl_decay)
             ctl = ctl*ctl_decay + tss*(1-ctl_decay)
-            results.append({'date':d_str,'tss':round(tss,1),'atl':round(atl,1),'ctl':round(ctl,1),'tsb':round(ctl-atl,1)})
+            results.append({'date':d_str,'tss':round(tss,1),'atl':round(atl,1),
+                           'ctl':round(ctl,1),'tsb':round(ctl-atl,1)})
 
         return jsonify({'data': results[-60:], 'current': results[-1] if results else {}})
     except Exception as e:
@@ -687,7 +742,8 @@ def workout_detail(activity_id):
                            elev_gain_ft, elev_loss_ft, avg_hr_bpm
                     FROM workout_splits WHERE workout_id = '{apple[0]['workout_id']}' ORDER BY mile
                 """)
-        return jsonify({'activity':act,'zones':zones[0] if zones else None,'splits':splits or [],'apple':apple[0] if apple else None})
+        return jsonify({'activity':act,'zones':zones[0] if zones else None,
+                       'splits':splits or [],'apple':apple[0] if apple else None})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
