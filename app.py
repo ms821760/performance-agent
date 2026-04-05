@@ -191,7 +191,7 @@ def dashboard():
                    z1_min, z2_min, z3_min, z4_min, z5_min,
                    total_calories_kcal, steps
             FROM daily_activity_summary
-            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date
         """)
         health = run_query("""
@@ -209,7 +209,7 @@ def dashboard():
         workouts = run_query("""
             SELECT activity_id, date, sport_type, name, moving_time_min, distance_miles, avg_hr
             FROM workouts_strava
-            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date DESC
         """)
 
