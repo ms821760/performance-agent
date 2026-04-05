@@ -131,10 +131,16 @@ nav button.active { color:var(--gold); background:#1a1500; }
 
 /* Records tab */
 #records-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:900px; width:100%; margin:0 auto; }
-.pr-table { width:100%; border-collapse:collapse; margin-bottom:24px; }
-.pr-table th { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); text-align:left; padding:6px 10px; border-bottom:1px solid var(--border); font-weight:normal; }
-.pr-table td { font-size:13px; padding:10px 10px; border-bottom:1px solid #161616; }
-.pr-table tr:hover td { background:var(--bg3); }
+.pr-distance-card { border:1px solid var(--border); border-radius:4px; margin-bottom:16px; background:var(--bg2); overflow:hidden; }
+.pr-distance-header { padding:10px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.pr-distance-label { font-size:14px; color:var(--text); }
+.pr-distance-best { font-size:11px; color:var(--gold); margin-left:auto; }
+.pr-table { width:100%; border-collapse:collapse; }
+.pr-table th { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); text-align:left; padding:8px 16px; border-bottom:1px solid var(--border); font-weight:normal; }
+.pr-table td { font-size:13px; padding:10px 16px; border-bottom:1px solid #161616; }
+.pr-table tr:last-child td { border-bottom:none; }
+.pr-table tr.clickable { cursor:pointer; transition:background .12s; }
+.pr-table tr.clickable:hover td { background:var(--bg3); }
 .pr-rank-1 { color:var(--gold); font-weight:500; }
 .pr-rank-2 { color:#aaa; }
 .pr-rank-3 { color:#888; }
@@ -519,7 +525,7 @@ async function loadDashboard() {
       chart.innerHTML = d.activity.map(day => {
         const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
         const pct = v => Math.round(v/maxMin*100);
-        const dayLabel = new Date(day.date + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short'});
+        const dayLabel = new Date(day.date).toLocaleDateString('en-US',{weekday:'short'});
         const hasW = window.workoutsByDate[day.date] && window.workoutsByDate[day.date].length > 0;
         const clickable = hasW ? `onclick="event.stopPropagation();openDayWorkouts('${day.date}',window.workoutsByDate['${day.date}']||[])" style="cursor:pointer"` : '';
         return `<div class="day-row ${hasW?'hover-day':''}" ${clickable} title="${hasW?'Click to view workouts':''}">
@@ -785,26 +791,53 @@ async function loadRecords() {
 function renderPRTable(elId, prs, sport) {
   const el = document.getElementById(elId);
   if (!prs.length) { el.innerHTML = '<p style="color:var(--dim);font-size:12px">No records found.</p>'; return; }
+
   // Group by distance
   const byDist = {};
   prs.forEach(p => {
     if (!byDist[p.distance_label]) byDist[p.distance_label] = [];
     byDist[p.distance_label].push(p);
   });
-  let html = '<table class="pr-table"><thead><tr><th>Distance</th><th>Rank</th><th>Time / Pace</th><th>Date</th></tr></thead><tbody>';
+
+  const isRun = sport === 'Running';
+  let html = '';
+
   Object.keys(byDist).forEach(dist => {
-    byDist[dist].forEach((p, i) => {
+    const rows = byDist[dist];
+    const best = rows.find(r => r.rank === 1);
+    const bestDisplay = best ? (best.best_pace_display || formatTime(best.best_time_sec)) : '—';
+    const paceLabel = isRun ? 'Pace / Time' : 'Speed / Time';
+
+    html += `<div class="pr-distance-card">
+      <div class="pr-distance-header">
+        <span class="pr-distance-label">🏅 ${dist}</span>
+        <span class="pr-distance-best">Best: ${bestDisplay}</span>
+      </div>
+      <table class="pr-table">
+        <thead><tr>
+          <th>Rank</th>
+          <th>${paceLabel}</th>
+          <th>Date</th>
+          <th></th>
+        </tr></thead>
+        <tbody>`;
+
+    rows.forEach(p => {
       const rankClass = p.rank === 1 ? 'pr-rank-1' : p.rank === 2 ? 'pr-rank-2' : p.rank === 3 ? 'pr-rank-3' : '';
       const medal = p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : `#${p.rank}`;
-      html += `<tr>
-        <td>${i === 0 ? dist : ''}</td>
+      const clickable = p.activity_id ? `class="clickable" onclick="openWorkout(${p.activity_id}, '${dist} — ${p.achieved_date || ''}')"` : '';
+      const arrow = p.activity_id ? '<span style="color:var(--dim);font-size:11px">›</span>' : '';
+      html += `<tr ${clickable}>
         <td class="${rankClass}">${medal}</td>
         <td class="${rankClass}">${p.best_pace_display || formatTime(p.best_time_sec)}</td>
         <td style="color:var(--dim)">${p.achieved_date || '—'}</td>
+        <td style="text-align:right">${arrow}</td>
       </tr>`;
     });
+
+    html += `</tbody></table></div>`;
   });
-  html += '</tbody></table>';
+
   el.innerHTML = html;
 }
 
