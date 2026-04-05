@@ -225,6 +225,7 @@ nav button.active { color:var(--gold); background:#1a1500; }
     <button onclick="showTab('chat',this)">Coach</button>
     <button onclick="showTab('records',this)">Records</button>
     <button onclick="showTab('kpi',this)">KPIs</button>
+    <button onclick="showTab('nutrition',this)">Nutrition</button>
     <button onclick="showTab('report',this)">Report</button>
     <button onclick="showTab('goals',this)">Goals</button>
   </nav>
@@ -339,6 +340,18 @@ nav button.active { color:var(--gold); background:#1a1500; }
     </div>
   </div>
 
+
+  <!-- NUTRITION -->
+  <div class="tab" id="tab-nutrition">
+    <div id="nutrition-content">
+      <div class="section-title" style="margin-top:0">This Week's Nutrition</div>
+      <div id="nutr-day-grid"><div class="spinner"></div></div>
+      <div class="section-title">Actuals vs Goals</div>
+      <div id="nutr-goal-bars"><div class="spinner"></div></div>
+      <div id="nutr-rationale"></div>
+    </div>
+  </div>
+
   <!-- REPORT -->
   <div class="tab" id="tab-report">
     <div id="report-content">
@@ -403,6 +416,7 @@ function showTab(name, btn) {
   if (name === 'goals')     loadGoals();
   if (name === 'records')   loadRecords();
   if (name === 'kpi')       loadKPIs();
+  if (name === 'nutrition') loadNutrition();
 }
 
 function setLoading(v) {
@@ -527,8 +541,7 @@ async function loadDashboard() {
       chart.innerHTML = d.activity.map(day => {
         const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
         const pct = v => Math.round(v/maxMin*100);
-        const [y,m,d] = day.date.split('-');
-        const dayLabel = new Date(y, m-1, d).toLocaleDateString('en-US',{weekday:'short'});
+        const dayLabel = new Date(day.date).toLocaleDateString('en-US',{weekday:'short'});
         const hasW = window.workoutsByDate[day.date] && window.workoutsByDate[day.date].length > 0;
         const clickable = hasW ? `onclick="event.stopPropagation();openDayWorkouts('${day.date}',window.workoutsByDate['${day.date}']||[])" style="cursor:pointer"` : '';
         return `<div class="day-row ${hasW?'hover-day':''}" ${clickable} title="${hasW?'Click to view workouts':''}">
@@ -1015,6 +1028,109 @@ function renderWorkoutRows(workouts) {
       <div class="wr-arrow">›</div>
     </div>`;
   }).join('');
+}
+
+
+// ── Nutrition tab ─────────────────────────────────────────────
+let nutritionLoaded = false;
+async function loadNutrition() {
+  if (nutritionLoaded) return;
+  nutritionLoaded = true;
+  try {
+    // Fetch last 7 days nutrition + goals in parallel
+    const [nutrResp, goalsResp] = await Promise.all([
+      fetch('/api/dashboard').then(r => r.json()),
+      fetch('/api/nutrition_goals').then(r => r.json())
+    ]);
+
+    const nutrition = nutrResp.nutrition || [];
+    const goals     = goalsResp;
+
+    // Build day-of-week grid (last 7 days)
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const [y,mo,da] = dateStr.split('-');
+      const dayLabel = new Date(+y, mo-1, +da).toLocaleDateString('en-US', {weekday:'short'});
+      const data = nutrition.find(n => n.date === dateStr);
+      days.push({ date: dateStr, label: dayLabel, isToday: i === 0, data });
+    }
+
+    const goalCal = goals.calories || 2200;
+
+    document.getElementById('nutr-day-grid').innerHTML =
+      '<div class="nutr-day-grid">' +
+      days.map(day => {
+        if (!day.data || !day.data.calories_kcal) {
+          return `<div class="nutr-day-card no-data">
+            <div class="nd-day">${day.label}</div>
+            <div class="nd-cal" style="font-size:13px">—</div>
+            <div class="nd-unit">no log</div>
+          </div>`;
+        }
+        const d = day.data;
+        const cal = Math.round(d.calories_kcal);
+        const pct = Math.min(Math.round(cal / goalCal * 100), 100);
+        const calColor = cal > goalCal * 1.1 ? '#c07040' : cal < goalCal * 0.8 ? '#a03030' : 'var(--green)';
+        return `<div class="nutr-day-card ${day.isToday ? 'today' : ''}">
+          <div class="nd-day">${day.label}</div>
+          <div class="nd-cal" style="color:${calColor}">${cal}</div>
+          <div class="nd-unit">kcal</div>
+          <div class="nd-macros">
+            <div class="nd-macro"><span class="nm-label">P</span><span class="nm-val">${Math.round(d.protein_g||0)}g</span></div>
+            <div class="nd-macro"><span class="nm-label">C</span><span class="nm-val">${Math.round(d.carbs_g||0)}g</span></div>
+            <div class="nd-macro"><span class="nm-label">F</span><span class="nm-val">${Math.round(d.fat_g||0)}g</span></div>
+          </div>
+        </div>`;
+      }).join('') + '</div>';
+
+    // Compute 7-day averages
+    const logged = nutrition.filter(n => n.calories_kcal);
+    const avgCal  = logged.length ? Math.round(logged.reduce((s,n) => s+(n.calories_kcal||0),0)/logged.length) : 0;
+    const avgPro  = logged.length ? Math.round(logged.reduce((s,n) => s+(n.protein_g||0),0)/logged.length) : 0;
+    const avgCarb = logged.length ? Math.round(logged.reduce((s,n) => s+(n.carbs_g||0),0)/logged.length) : 0;
+    const avgFat  = logged.length ? Math.round(logged.reduce((s,n) => s+(n.fat_g||0),0)/logged.length) : 0;
+
+    const macros = [
+      { label:'Calories',  actual:avgCal,  goal:goals.calories||2200,  color:'#c8a96e', unit:'kcal' },
+      { label:'Protein',   actual:avgPro,  goal:goals.protein_g||185,  color:'#4a7c59', unit:'g' },
+      { label:'Carbs',     actual:avgCarb, goal:goals.carbs_g||175,    color:'#4a6fa5', unit:'g' },
+      { label:'Fat',       actual:avgFat,  goal:goals.fat_g||65,       color:'#7a4a8a', unit:'g' },
+    ];
+
+    const maxVal = Math.max(...macros.map(m => Math.max(m.actual, m.goal)), 1);
+
+    document.getElementById('nutr-goal-bars').innerHTML =
+      macros.map(m => {
+        const actPct  = Math.round(m.actual / maxVal * 100);
+        const goalPct = Math.round(m.goal   / maxVal * 100);
+        const onTarget = m.actual >= m.goal * 0.9 && m.actual <= m.goal * 1.1;
+        const over     = m.actual > m.goal * 1.15;
+        const status   = onTarget ? '✓' : over ? '↑' : m.actual >= m.goal * 0.8 ? '~' : '';
+        const statusColor = onTarget ? 'var(--green)' : over ? '#c07040' : 'var(--dim)';
+        return `<div class="nutr-row">
+          <div class="nutr-label">${m.label}</div>
+          <div class="nutr-goal-bar-wrap">
+            <div class="nutr-goal-bar-actual" style="width:${actPct}%;background:${m.color}"></div>
+            <div class="nutr-goal-line" style="left:${goalPct}%"></div>
+          </div>
+          <div class="nutr-nums">
+            <div class="nutr-actual">${m.actual}${m.unit}</div>
+            <div class="nutr-goal-val">/ ${m.goal}${m.unit}</div>
+          </div>
+          <div class="nutr-status" style="color:${statusColor}">${status}</div>
+        </div>`;
+      }).join('');
+
+    if (goals.rationale) {
+      document.getElementById('nutr-rationale').textContent = goals.rationale;
+    }
+
+  } catch(e) {
+    document.getElementById('nutr-day-grid').textContent = 'Error loading nutrition: ' + e.message;
+  }
 }
 
 // Auto-load dashboard
