@@ -191,7 +191,7 @@ def dashboard():
                    z1_min, z2_min, z3_min, z4_min, z5_min,
                    total_calories_kcal, steps
             FROM daily_activity_summary
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date
         """)
         health = run_query("""
@@ -209,7 +209,7 @@ def dashboard():
         workouts = run_query("""
             SELECT activity_id, date, sport_type, name, moving_time_min, distance_miles, avg_hr
             FROM workouts_strava
-            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date DESC
         """)
 
@@ -758,6 +758,78 @@ def workout_detail(activity_id):
                        'splits':splits or [],'apple':apple[0] if apple else None})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# ── API: Nutrition goals ──────────────────────────────────────
+@app.route('/api/nutrition_goals')
+@login_required
+def nutrition_goals():
+    try:
+        # Recent nutrition actuals
+        recent_nutrition = run_query("""
+            SELECT date, calories_kcal, protein_g, carbs_g, fat_g
+            FROM daily_nutrition
+            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            ORDER BY date DESC
+        """)
+
+        # Recent training load for context
+        recent_training = run_query("""
+            SELECT date, run_min, ride_min, strength_min, cardio_min,
+                   z2_min, z3_min, z4_min, z5_min
+            FROM daily_activity_summary
+            WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+            ORDER BY date DESC
+        """)
+
+        # Latest body comp
+        body_comp = run_query("""
+            SELECT date, weight_lb, body_fat_pct, skeletal_muscle_mass_lb
+            FROM body_composition ORDER BY date DESC LIMIT 1
+        """)
+
+        phase = get_current_phase()
+
+        prompt = f"""{ATHLETE_CONTEXT}
+
+CURRENT PHASE: {phase['name']}
+Phase goal: {phase['goal']}
+
+RECENT NUTRITION (last 7 days):
+{json.dumps(recent_nutrition, default=str)}
+
+RECENT TRAINING (last 7 days):
+{json.dumps(recent_training, default=str)}
+
+LATEST BODY COMP:
+{json.dumps(body_comp, default=str)}
+
+Based on the athlete's current phase, body composition goals, and recent training load,
+recommend daily nutrition targets. Consider:
+- Body comp phase: moderate calorie deficit to lose fat, high protein to preserve muscle
+- Protein: 1g per lb of bodyweight minimum to preserve muscle during cut
+- Carbs: enough to fuel workouts, limited on rest days
+- Fat: healthy fats, not overly restricted
+- Be realistic based on what they've actually been eating
+
+Respond with ONLY a valid JSON object, no other text:
+{{"calories": <kcal>, "protein_g": <g>, "carbs_g": <g>, "fat_g": <g>, "rationale": "<2 sentences explaining the targets>"}}"""
+
+        text  = claude('', prompt, max_tokens=300)
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            return jsonify(json.loads(match.group()))
+        raise ValueError('No JSON in response')
+
+    except Exception as e:
+        # Sensible defaults for body comp phase
+        return jsonify({
+            'calories': 2200,
+            'protein_g': 185,
+            'carbs_g': 175,
+            'fat_g': 65,
+            'rationale': 'Default targets for body composition phase. High protein to preserve muscle, moderate deficit to lose fat.'
+        })
 
 # ── API: Phases ───────────────────────────────────────────────
 @app.route('/api/phases')
