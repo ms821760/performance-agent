@@ -553,7 +553,8 @@ async function loadDashboard() {
       chart.innerHTML = d.activity.map(day => {
         const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
         const pct = v => Math.round(v/maxMin*100);
-        const dayLabel = new Date(day.date).toLocaleDateString('en-US',{weekday:'short'});
+        const [y,m,d] = day.date.split('-');
+        const dayLabel = (parseInt(m)) + '/' + parseInt(d);
         const hasW = window.workoutsByDate[day.date] && window.workoutsByDate[day.date].length > 0;
         const clickable = hasW ? `onclick="event.stopPropagation();openDayWorkouts('${day.date}',window.workoutsByDate['${day.date}']||[])" style="cursor:pointer"` : '';
         return `<div class="day-row ${hasW?'hover-day':''}" ${clickable} title="${hasW?'Click to view workouts':''}">
