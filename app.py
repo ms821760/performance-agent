@@ -76,8 +76,11 @@ KEY COACHING RULES:
 - Excessive Z4/Z5 during body comp phase risks muscle catabolism
 - Watch HRV and resting HR trends for overtraining signs
 - Nutrition tracking reminder: flag days with no nutrition log
-- DATA WINDOWS: weekly_summary = last 7 days, month_to_date = from 1st of current month to today.
-  NEVER say "this month" based only on 7-day data. Always use month_to_date for monthly statements.
+- DATA WINDOWS: You have access to the full historical dataset — all workouts, nutrition, health metrics
+  and body composition ever recorded. The data provided includes all_time_monthly (every month summarized),
+  all_runs, all_rides (all historical), recent_workouts (last 30 days individual), and more.
+  Use this full history to answer questions about any time period. Never say you can only see 30 days.
+  month_to_date covers from the 1st of the current month to today ({TODAY}).
   If the month just started and month_to_date only covers a few days, say so explicitly.
 """
 
@@ -96,10 +99,10 @@ DATABASE SCHEMA (PostgreSQL):
 
 POSTGRESQL DATE RULES:
 - NEVER use YEAR(), MONTH(), DAY() — PostgreSQL only
+- Full history is available — data goes back to 2021
 - Current year: date >= '2026-01-01'
-- Last 7 days: date >= CURRENT_DATE - INTERVAL '7 days'
 - Month to date: date >= DATE_TRUNC('month', CURRENT_DATE)
-- Always add LIMIT
+- The data provided to you already spans the full history — use it all
 """
 
 # ── Supabase helpers ──────────────────────────────────────────
@@ -546,6 +549,9 @@ Watch for: {', '.join(phase['watch'])}
 
 COACHING RULES:
 - Answer using ONLY the data provided. Never invent numbers.
+- You have FULL HISTORICAL DATA — all workouts, nutrition, health metrics ever recorded.
+  Never tell the user you can only see a limited window. If a dataset key like all_time_monthly
+  or all_runs is present, it covers the entire history. Use it.
 - Lead with the key insight. Be direct and specific.
 - Always frame answers through the lens of the current phase goal.
 - Flag concerns clearly: overtraining, under-eating, insufficient protein, too much high intensity.
@@ -553,7 +559,6 @@ COACHING RULES:
 - For hill analysis: use elev_gain_ft and pace from workout_splits.
 - month_to_date covers from the 1st of the current month to today ({TODAY}).
   If only a few days into the month, acknowledge that explicitly — don't extrapolate.
-  Never use the 7-day weekly_summary to make monthly statements.
 - Keep answers focused: 150-300 words unless a detailed plan is requested.
 """
         messages = []
