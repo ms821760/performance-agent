@@ -331,7 +331,7 @@ def chat():
         q = question.lower()
         fetched = {}
 
-        # ── Always fetch month-to-date for context ────────────
+        # ── Always fetch: month-to-date + full monthly breakdown + recent workouts ──
         fetched['month_to_date'] = run_query("""
             SELECT
                 DATE_TRUNC('month', CURRENT_DATE)::date AS month_start,
@@ -348,6 +348,36 @@ def chat():
             WHERE date >= DATE_TRUNC('month', CURRENT_DATE)
         """)
 
+        # All-time monthly summary — always included for broad context
+        fetched['all_time_monthly'] = run_query("""
+            SELECT DATE_TRUNC('month', date)::date as month,
+                   ROUND(SUM(run_min)::numeric, 0) run_min,
+                   ROUND(SUM(ride_min)::numeric, 0) ride_min,
+                   ROUND(SUM(strength_min)::numeric, 0) strength_min,
+                   ROUND(SUM(cardio_min)::numeric, 0) cardio_min,
+                   ROUND(SUM(z2_min)::numeric, 0) z2_min,
+                   ROUND(SUM(z3_min+z4_min+z5_min)::numeric, 0) high_intensity_min,
+                   COUNT(DISTINCT date) days_active
+            FROM daily_activity_summary
+            GROUP BY 1 ORDER BY 1
+        """)
+
+        # Recent 30 days workouts — always included
+        fetched['recent_workouts'] = run_query("""
+            SELECT date, sport_type, name, moving_time_min, distance_miles, avg_hr, calories
+            FROM workouts_strava
+            WHERE date >= CURRENT_DATE - INTERVAL '30 days'
+            ORDER BY date DESC
+        """)
+
+        # Recent health — always included
+        fetched['recent_health'] = run_query("""
+            SELECT date, resting_hr_bpm, hrv_ms, steps, active_calories_kcal
+            FROM daily_health
+            WHERE date >= CURRENT_DATE - INTERVAL '30 days'
+            ORDER BY date DESC
+        """)
+
         # ── Weekly/recent activity ────────────────────────────
         if any(w in q for w in ['last week', 'this week', 'training week', 'how was', 'weekly']):
             fetched['weekly_summary'] = run_query("""
@@ -358,21 +388,23 @@ def chat():
                 WHERE date >= CURRENT_DATE - INTERVAL '7 days'
                 ORDER BY date
             """)
-            fetched['workouts_week'] = run_query("""
-                SELECT date, sport_type, name, moving_time_min,
-                       distance_miles, avg_hr, calories
-                FROM workouts_strava
-                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-                ORDER BY date
-            """)
 
         # ── Nutrition ─────────────────────────────────────────
         if any(w in q for w in ['nutrition', 'food', 'eat', 'calorie', 'protein', 'macro', 'diet']):
-            fetched['nutrition_recent'] = run_query("""
+            fetched['nutrition_all'] = run_query("""
                 SELECT date, calories_kcal, protein_g, carbs_g, fat_g
                 FROM daily_nutrition
-                WHERE date >= CURRENT_DATE - INTERVAL '30 days'
-                ORDER BY date DESC LIMIT 30
+                ORDER BY date DESC LIMIT 120
+            """)
+            fetched['nutrition_monthly_avg'] = run_query("""
+                SELECT DATE_TRUNC('month', date)::date as month,
+                       ROUND(AVG(calories_kcal)::numeric, 0) avg_calories,
+                       ROUND(AVG(protein_g)::numeric, 1) avg_protein,
+                       ROUND(AVG(carbs_g)::numeric, 1) avg_carbs,
+                       ROUND(AVG(fat_g)::numeric, 1) avg_fat,
+                       COUNT(*) days_logged
+                FROM daily_nutrition
+                GROUP BY 1 ORDER BY 1
             """)
 
         # ── Body composition ──────────────────────────────────
@@ -384,27 +416,25 @@ def chat():
             """)
 
         # ── Cycling / rides ───────────────────────────────────
-        if any(w in q for w in ['ride', 'cycling', 'bike', 'ms150', 'ms 150', 'longest']):
-            fetched['rides'] = run_query("""
+        if any(w in q for w in ['ride', 'cycling', 'bike', 'ms150', 'ms 150', 'longest', 'miles']):
+            fetched['all_rides'] = run_query("""
                 SELECT date, sport_type, name, distance_miles, moving_time_min,
                        avg_hr, calories, total_elevation_gain_m
                 FROM workouts_strava
                 WHERE sport_type IN ('Ride','GravelRide','VirtualRide')
-                AND date >= '2026-01-01'
-                ORDER BY distance_miles DESC LIMIT 15
+                ORDER BY date DESC LIMIT 200
             """)
 
         # ── Running ───────────────────────────────────────────
         if any(w in q for w in ['run', 'pace', 'mile', 'marathon', '5k', '10k', 'half',
                                   'november', 'december', 'october', 'january', 'february',
                                   'september', 'august', 'hill', 'split', 'training block']):
-            fetched['runs_strava'] = run_query("""
+            fetched['all_runs'] = run_query("""
                 SELECT date, name, sport_type, distance_miles,
                        moving_time_min, avg_hr, max_hr, total_elevation_gain_m
                 FROM workouts_strava
                 WHERE sport_type = 'Run'
-                AND date >= CURRENT_DATE - INTERVAL '18 months'
-                ORDER BY date DESC LIMIT 80
+                ORDER BY date DESC LIMIT 200
             """)
             fetched['runs_apple'] = run_query("""
                 SELECT date, sport_type, distance_mi, avg_pace_display,
@@ -412,8 +442,7 @@ def chat():
                        z1_min, z2_min, z3_min, z4_min, z5_min
                 FROM workouts_apple
                 WHERE sport_type ILIKE '%run%'
-                AND date >= CURRENT_DATE - INTERVAL '18 months'
-                ORDER BY date DESC LIMIT 80
+                ORDER BY date DESC LIMIT 200
             """)
             if any(w in q for w in ['hill', 'split', 'mile by mile', 'pace per mile',
                                       'january 11', 'half marathon', 'jan 11']):
@@ -421,10 +450,18 @@ def chat():
                     SELECT s.date, s.mile, s.split_pace_display, s.split_pace_min_mi,
                            s.elev_gain_ft, s.elev_loss_ft, s.avg_hr_bpm
                     FROM workout_splits s
-                    WHERE s.date >= CURRENT_DATE - INTERVAL '18 months'
                     ORDER BY s.date DESC, s.mile
-                    LIMIT 300
+                    LIMIT 500
                 """)
+
+        # ── Strength / cardio workouts ────────────────────────
+        if any(w in q for w in ['strength', 'lifting', 'weights', 'cardio', 'stair', 'workout']):
+            fetched['strength_cardio'] = run_query("""
+                SELECT date, sport_type, name, moving_time_min, avg_hr, calories
+                FROM workouts_strava
+                WHERE sport_type IN ('Strength','Workout','Cardio','StairStepper')
+                ORDER BY date DESC LIMIT 100
+            """)
 
         # ── PRs ───────────────────────────────────────────────
         if any(w in q for w in ['pr', 'personal record', 'best', 'fastest', 'record']):
@@ -438,11 +475,11 @@ def chat():
 
         # ── Performance tests / KPIs ──────────────────────────
         if any(w in q for w in ['kpi', 'ftp', 'pull up', 'push up', 'pullup', 'pushup',
-                                  'test', 'performance test', 'dip', 'plank']):
+                                  'test', 'performance test', 'dip', 'plank', 'vo2']):
             fetched['performance_tests'] = run_query("""
                 SELECT test_type, value, unit, date, notes
                 FROM performance_tests
-                ORDER BY test_type, date DESC
+                ORDER BY test_type, date
             """)
 
         # ── HR zones ─────────────────────────────────────────
@@ -455,7 +492,6 @@ def chat():
                        ROUND(SUM(z4_min)::numeric, 0) z4,
                        ROUND(SUM(z5_min)::numeric, 0) z5
                 FROM daily_activity_summary
-                WHERE date >= CURRENT_DATE - INTERVAL '6 months'
                 GROUP BY 1 ORDER BY 1
             """)
 
@@ -463,13 +499,12 @@ def chat():
         if any(w in q for w in ['overtrain', 'recover', 'tired', 'hrv', 'resting hr',
                                   'fatigue', 'atl', 'ctl', 'tsb', 'training load',
                                   'fitness', 'form', 'fresh']):
-            fetched['health_trend'] = run_query("""
+            fetched['health_full'] = run_query("""
                 SELECT date, resting_hr_bpm, hrv_ms, steps, active_calories_kcal
                 FROM daily_health
-                WHERE date >= CURRENT_DATE - INTERVAL '21 days'
-                ORDER BY date DESC
+                ORDER BY date DESC LIMIT 90
             """)
-            fetched['weekly_load'] = run_query("""
+            fetched['weekly_load_all'] = run_query("""
                 SELECT week_start,
                        ROUND(SUM(run_min)::numeric, 0) run_min,
                        ROUND(SUM(ride_min)::numeric, 0) ride_min,
@@ -478,59 +513,20 @@ def chat():
                        ROUND(SUM(z2_min)::numeric, 0) z2_min,
                        ROUND(SUM(z3_min+z4_min+z5_min)::numeric, 0) high_intensity_min
                 FROM daily_activity_summary
-                WHERE date >= CURRENT_DATE - INTERVAL '8 weeks'
                 GROUP BY week_start ORDER BY week_start
             """)
 
         # ── Recommendations / focus ───────────────────────────
         if any(w in q for w in ['focus', 'recommend', 'should i', 'what should', 'plan', 'this week']):
-            fetched['weekly_load'] = run_query("""
+            fetched['weekly_load_recent'] = run_query("""
                 SELECT week_start,
                        ROUND(SUM(run_min)::numeric, 0) run_min,
                        ROUND(SUM(ride_min)::numeric, 0) ride_min,
                        ROUND(SUM(strength_min)::numeric, 0) strength_min,
                        ROUND(SUM(cardio_min)::numeric, 0) cardio_min
                 FROM daily_activity_summary
-                WHERE date >= CURRENT_DATE - INTERVAL '4 weeks'
+                WHERE date >= CURRENT_DATE - INTERVAL '8 weeks'
                 GROUP BY week_start ORDER BY week_start
-            """)
-            fetched['health_recent'] = run_query("""
-                SELECT date, resting_hr_bpm, hrv_ms
-                FROM daily_health
-                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-                ORDER BY date DESC
-            """)
-
-        # ── Month/time period questions ───────────────────────
-        if any(w in q for w in ['this month', 'month', 'april', 'march', 'february',
-                                  'january', 'year so far', 'this year']):
-            fetched['monthly_breakdown'] = run_query("""
-                SELECT DATE_TRUNC('month', date)::date as month,
-                       ROUND(SUM(run_min)::numeric, 0) run_min,
-                       ROUND(SUM(ride_min)::numeric, 0) ride_min,
-                       ROUND(SUM(strength_min)::numeric, 0) strength_min,
-                       ROUND(SUM(cardio_min)::numeric, 0) cardio_min,
-                       ROUND(SUM(z2_min)::numeric, 0) z2_min,
-                       COUNT(DISTINCT date) days_active
-                FROM daily_activity_summary
-                WHERE date >= '2026-01-01'
-                GROUP BY 1 ORDER BY 1
-            """)
-
-        # ── Default fallback (always have something) ──────────
-        if len(fetched) <= 1:  # only month_to_date
-            fetched['weekly_summary'] = run_query("""
-                SELECT date, run_min, ride_min, strength_min, cardio_min, walk_min,
-                       z2_min, total_calories_kcal
-                FROM daily_activity_summary
-                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-                ORDER BY date
-            """)
-            fetched['recent_workouts'] = run_query("""
-                SELECT date, sport_type, name, moving_time_min, distance_miles, avg_hr
-                FROM workouts_strava
-                WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-                ORDER BY date DESC
             """)
 
         data_str = '\n\n'.join(
