@@ -27,8 +27,10 @@ nav button.active { color:var(--gold); background:#1a1500; }
 #main { flex:1; display:flex; overflow:hidden; }
 .tab { display:none; flex:1; overflow:hidden; flex-direction:column; }
 .tab.active { display:flex; }
+.spinner { display:inline-block; width:14px; height:14px; border:1.5px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
 
-/* Chat */
+/* ── Chat ── */
 #chat-messages { flex:1; overflow-y:auto; padding:24px 20px; display:flex; flex-direction:column; gap:20px; max-width:760px; width:100%; margin:0 auto; }
 .msg-user { display:flex; gap:10px; align-items:flex-start; }
 .msg-user .dot2 { width:6px; height:6px; border-radius:50%; background:var(--gold); margin-top:7px; flex-shrink:0; }
@@ -56,7 +58,7 @@ nav button.active { color:var(--gold); background:#1a1500; }
 #sendbtn:disabled { opacity:.25; cursor:default; }
 #hint { font-size:10px; color:#252525; margin-top:6px; }
 
-/* Dashboard */
+/* ── Dashboard ── */
 #dashboard-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:900px; width:100%; margin:0 auto; }
 .section-title { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); margin-bottom:12px; margin-top:28px; }
 .section-title:first-child { margin-top:0; }
@@ -79,7 +81,7 @@ nav button.active { color:var(--gold); background:#1a1500; }
 #nutrition-alert { border:1px solid #5a3a1a; background:#1a1000; border-radius:4px; padding:12px 16px; margin-bottom:16px; font-size:12px; color:var(--gold); line-height:1.6; display:none; }
 #week-chart { margin-top:8px; }
 .day-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-.day-label { font-size:11px; color:var(--dim); width:32px; flex-shrink:0; }
+.day-label { font-size:11px; color:var(--dim); width:36px; flex-shrink:0; }
 .bar-group { flex:1; display:flex; gap:2px; align-items:center; height:14px; }
 .bar { height:100%; border-radius:1px; transition:width .3s; min-width:0; }
 .bar.run { background:var(--green); }
@@ -88,8 +90,8 @@ nav button.active { color:var(--gold); background:#1a1500; }
 .bar.cardio { background:var(--purple); }
 .bar.walk { background:#666; }
 .day-total { font-size:10px; color:var(--dim); width:36px; text-align:right; flex-shrink:0; }
-.hover-day:hover { background:var(--bg3); border-radius:3px; }
-.hover-day { transition:background .12s; margin:0 -6px; padding:2px 6px; }
+.hover-day { transition:background .12s; margin:0 -6px; padding:2px 6px; border-radius:3px; }
+.hover-day:hover { background:var(--bg3); }
 #zone-chart { margin-top:8px; }
 .zone-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
 .zone-label { font-size:11px; color:var(--dim); width:24px; flex-shrink:0; font-weight:500; }
@@ -111,25 +113,7 @@ nav button.active { color:var(--gold); background:#1a1500; }
 .tl-stat .label { font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px; }
 .tl-stat .value { font-size:16px; }
 
-/* Report */
-#report-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:760px; width:100%; margin:0 auto; }
-#report-text { font-size:13px; color:#bbb; line-height:1.9; white-space:pre-wrap; margin-top:16px; }
-#generate-report { background:transparent; border:1px solid var(--gold); color:var(--gold); padding:10px 20px; cursor:pointer; font-size:11px; letter-spacing:.15em; text-transform:uppercase; font-family:Georgia,serif; transition:all .15s; }
-#generate-report:hover { background:var(--gold); color:var(--bg); }
-#generate-report:disabled { opacity:.3; cursor:default; }
-
-/* Goals */
-#goals-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:760px; width:100%; margin:0 auto; }
-.phase-card { border:1px solid var(--border); border-radius:4px; padding:18px 20px; margin-bottom:12px; background:var(--bg2); }
-.phase-card.current { border-color:var(--gold); }
-.phase-card .pc-badge { display:inline-block; font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:3px 10px; border-radius:2px; margin-bottom:6px; }
-.phase-card.current .pc-badge { background:#1a1500; color:var(--gold); }
-.phase-card .pc-badge.upcoming { background:#0f1a0f; color:var(--green); }
-.phase-card .pc-name { font-size:16px; margin-bottom:8px; }
-.phase-card .pc-goal { font-size:12px; color:var(--muted); line-height:1.65; }
-.phase-card .pc-dates { font-size:11px; color:var(--dim); margin-top:10px; }
-
-/* Records tab */
+/* ── Records ── */
 #records-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:960px; width:100%; margin:0 auto; }
 .pr-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:8px; }
 .pr-distance-card { border:1px solid var(--border); border-radius:4px; background:var(--bg2); overflow:hidden; }
@@ -146,7 +130,7 @@ nav button.active { color:var(--gold); background:#1a1500; }
 .pr-rank-2 { color:#aaa; }
 .pr-rank-3 { color:#888; }
 
-/* KPI / Performance tests */
+/* ── KPIs ── */
 #kpi-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:900px; width:100%; margin:0 auto; }
 .kpi-add-form { border:1px solid var(--border); border-radius:4px; padding:18px 20px; background:var(--bg2); margin-bottom:24px; }
 .kpi-add-form h3 { font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); margin-bottom:14px; font-weight:normal; }
@@ -164,11 +148,37 @@ nav button.active { color:var(--gold); background:#1a1500; }
 .kpi-bar-label { font-size:9px; color:var(--dim); white-space:nowrap; }
 .kpi-bar-val { font-size:9px; color:var(--muted); }
 
-/* Spinner */
-.spinner { display:inline-block; width:14px; height:14px; border:1.5px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
+/* ── Nutrition ── */
+#nutrition-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:900px; width:100%; margin:0 auto; }
+.nutr-goal-bar-wrap { flex:1; position:relative; height:18px; background:var(--bg3); border-radius:2px; overflow:visible; }
+.nutr-goal-bar-actual { height:100%; border-radius:2px; transition:width .5s; }
+.nutr-goal-line { position:absolute; top:-3px; bottom:-3px; width:2px; border-radius:1px; background:#fff; opacity:.4; }
+.nutr-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.nutr-label { font-size:11px; color:var(--dim); width:70px; flex-shrink:0; }
+.nutr-nums { display:flex; gap:4px; align-items:center; width:110px; flex-shrink:0; }
+.nutr-actual { font-size:11px; color:var(--text); width:50px; text-align:right; }
+.nutr-goal-val { font-size:10px; color:var(--dim); }
+.nutr-status { font-size:10px; width:16px; flex-shrink:0; }
 
-/* Modal */
+/* ── Report ── */
+#report-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:760px; width:100%; margin:0 auto; }
+#report-text { font-size:13px; color:#bbb; line-height:1.9; white-space:pre-wrap; margin-top:16px; }
+#generate-report { background:transparent; border:1px solid var(--gold); color:var(--gold); padding:10px 20px; cursor:pointer; font-size:11px; letter-spacing:.15em; text-transform:uppercase; font-family:Georgia,serif; transition:all .15s; }
+#generate-report:hover { background:var(--gold); color:var(--bg); }
+#generate-report:disabled { opacity:.3; cursor:default; }
+
+/* ── Goals ── */
+#goals-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:760px; width:100%; margin:0 auto; }
+.phase-card { border:1px solid var(--border); border-radius:4px; padding:18px 20px; margin-bottom:12px; background:var(--bg2); }
+.phase-card.current { border-color:var(--gold); }
+.phase-card .pc-badge { display:inline-block; font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:3px 10px; border-radius:2px; margin-bottom:6px; }
+.phase-card.current .pc-badge { background:#1a1500; color:var(--gold); }
+.phase-card .pc-badge.upcoming { background:#0f1a0f; color:var(--green); }
+.phase-card .pc-name { font-size:16px; margin-bottom:8px; }
+.phase-card .pc-goal { font-size:12px; color:var(--muted); line-height:1.65; }
+.phase-card .pc-dates { font-size:11px; color:var(--dim); margin-top:10px; }
+
+/* ── Modals ── */
 #workout-modal, #body-comp-modal { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.75); align-items:center; justify-content:center; padding:20px; }
 #workout-modal.open, #body-comp-modal.open { display:flex; }
 #modal-box, #bc-modal-box { background:#0d0d0d; border:1px solid var(--border); border-radius:4px; width:100%; max-width:680px; max-height:88vh; overflow-y:auto; padding:24px; position:relative; }
@@ -199,8 +209,6 @@ nav button.active { color:var(--gold); background:#1a1500; }
 .workout-row .wr-name { font-size:13px; flex:1; }
 .workout-row .wr-meta { font-size:11px; color:var(--muted); }
 .workout-row .wr-arrow { font-size:10px; color:var(--dim); }
-
-/* Body comp modal chart */
 #bc-canvas-wrap { height:200px; width:100%; margin-top:12px; }
 #bc-canvas { width:100%; height:100%; }
 .bc-metric-btns { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
@@ -220,8 +228,8 @@ nav button.active { color:var(--gold); background:#1a1500; }
 <div id="header">
   <div class="brand">Performance</div>
   <span class="sep">|</span>
-  <nav>
-    <button onclick="showTab('dashboard',this)" class="active">Dashboard</button>
+  <nav id="nav">
+    <button onclick="showTab('dashboard',this)">Dashboard</button>
     <button onclick="showTab('chat',this)">Coach</button>
     <button onclick="showTab('records',this)">Records</button>
     <button onclick="showTab('kpi',this)">KPIs</button>
@@ -237,7 +245,7 @@ nav button.active { color:var(--gold); background:#1a1500; }
 <div id="main">
 
   <!-- DASHBOARD -->
-  <div class="tab active" id="tab-dashboard">
+  <div class="tab" id="tab-dashboard">
     <div id="dashboard-content">
       <div id="phase-banner">
         <div class="phase-label" style="color:var(--gold)">Current Phase</div>
@@ -258,14 +266,12 @@ nav button.active { color:var(--gold); background:#1a1500; }
       <div id="zone-chart"><div class="spinner"></div></div>
       <div id="zone-rationale"></div>
       <div class="section-title">Training Load (ATL / CTL / TSB)</div>
-      <div id="training-load-chart">
-        <div class="tl-current" id="tl-current-stats"></div>
-        <div id="tl-canvas-wrap"><canvas id="tl-canvas"></canvas></div>
-        <div class="tl-legend">
-          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#c8a96e"></div>CTL — Fitness</div>
-          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#a03030"></div>ATL — Fatigue</div>
-          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#4a7c59"></div>TSB — Form</div>
-        </div>
+      <div class="tl-current" id="tl-current-stats"></div>
+      <div id="tl-canvas-wrap"><canvas id="tl-canvas"></canvas></div>
+      <div class="tl-legend">
+        <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#c8a96e"></div>CTL — Fitness</div>
+        <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#a03030"></div>ATL — Fatigue</div>
+        <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#4a7c59"></div>TSB — Form</div>
       </div>
       <div class="section-title">Nutrition (Last 7 Days)</div>
       <div class="cards" id="nutrition-cards"><div class="card"><div class="label">Loading</div><div class="value">—</div></div></div>
@@ -339,7 +345,6 @@ nav button.active { color:var(--gold); background:#1a1500; }
       <div id="kpi-charts"><div class="spinner"></div></div>
     </div>
   </div>
-
 
   <!-- NUTRITION -->
   <div class="tab" id="tab-nutrition">
@@ -413,129 +418,129 @@ nav button.active { color:var(--gold); background:#1a1500; }
 </div>
 
 <script>
-const history = [];
+// ── State ─────────────────────────────────────────────────────
+const chatHistory = [];
 let loading = false;
 let bcData = [];
 let bcMetric = 'body_fat_pct';
+let dashLoaded = false;
+let goalsLoaded = false;
+let recordsLoaded = false;
+let kpiLoaded = false;
+let nutritionLoaded = false;
+
+// ── Utilities ─────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function dateLabel(dateStr) { const [y,m,d] = dateStr.split('-'); return parseInt(m)+'/'+parseInt(d); }
+function setLoading(v) {
+  loading = v;
+  document.getElementById('status-dot').className = 'dot'+(v?' loading':'');
+  const btn = document.getElementById('sendbtn');
+  if (btn) btn.disabled = v || !document.getElementById('inp').value.trim();
+}
 
 // ── Tab navigation ────────────────────────────────────────────
 function showTab(name, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'dashboard') loadDashboard();
-  if (name === 'goals')     loadGoals();
-  if (name === 'records')   loadRecords();
-  if (name === 'kpi')       loadKPIs();
-  if (name === 'nutrition') loadNutrition();
-}
-
-function setLoading(v) {
-  loading = v;
-  document.getElementById('status-dot').className = 'dot' + (v ? ' loading' : '');
-  const btn = document.getElementById('sendbtn');
-  if (btn) btn.disabled = v || !document.getElementById('inp').value.trim();
+  if (name==='dashboard' && !dashLoaded)     loadDashboard();
+  if (name==='goals'     && !goalsLoaded)    loadGoals();
+  if (name==='records'   && !recordsLoaded)  loadRecords();
+  if (name==='kpi'       && !kpiLoaded)      loadKPIs();
+  if (name==='nutrition' && !nutritionLoaded) loadNutrition();
 }
 
 // ── Chat ──────────────────────────────────────────────────────
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
-  document.getElementById('sendbtn').disabled = !el.value.trim() || loading;
-}
-function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
-function scrollBottom() { const m = document.getElementById('chat-messages'); m.scrollTop = m.scrollHeight; }
-function hideEmpty() { ['chat-empty','suggestions'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); }); }
+function autoResize(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; document.getElementById('sendbtn').disabled=!el.value.trim()||loading; }
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
+function scrollBottom() { const m=document.getElementById('chat-messages'); m.scrollTop=m.scrollHeight; }
+function hideEmpty() { ['chat-empty','suggestions'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();}); }
 function addUserMsg(text) {
   hideEmpty();
-  const div = document.createElement('div'); div.className = 'msg-user';
-  div.innerHTML = `<div class="dot2"></div><div class="text">${esc(text)}</div>`;
+  const div=document.createElement('div'); div.className='msg-user';
+  div.innerHTML=`<div class="dot2"></div><div class="text">${esc(text)}</div>`;
   document.getElementById('chat-messages').appendChild(div); scrollBottom();
 }
 function showStatusMsg(text) {
-  let el = document.getElementById('chat-status');
-  if (!el) { el = document.createElement('div'); el.id='chat-status'; el.className='status-line'; el.innerHTML='<div class="label">Coach</div><div class="text" id="chat-status-text"></div>'; document.getElementById('chat-messages').appendChild(el); }
-  document.getElementById('chat-status-text').textContent = text; scrollBottom();
+  let el=document.getElementById('chat-status');
+  if(!el){el=document.createElement('div');el.id='chat-status';el.className='status-line';el.innerHTML='<div class="label">Coach</div><div class="text" id="chat-status-text"></div>';document.getElementById('chat-messages').appendChild(el);}
+  document.getElementById('chat-status-text').textContent=text; scrollBottom();
 }
-function removeStatusMsg() { const el = document.getElementById('chat-status'); if (el) el.remove(); }
+function removeStatusMsg() { const el=document.getElementById('chat-status'); if(el)el.remove(); }
 function addCoachMsg(text, queries) {
   removeStatusMsg();
-  const div = document.createElement('div'); div.className = 'msg-coach';
-  let qtags = queries && queries.length ? `<div class="qtags">${queries.map(q => `<span class="qtag">${esc(q)}</span>`).join('')}</div>` : '';
-  div.innerHTML = `<div class="label">Coach</div><div class="text">${esc(text)}</div>${qtags}`;
+  const div=document.createElement('div'); div.className='msg-coach';
+  const qtags=queries&&queries.length?`<div class="qtags">${queries.map(q=>`<span class="qtag">${esc(q)}</span>`).join('')}</div>`:'';
+  div.innerHTML=`<div class="label">Coach</div><div class="text">${esc(text)}</div>${qtags}`;
   document.getElementById('chat-messages').appendChild(div); scrollBottom();
 }
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 async function sendMsg(textArg) {
-  const inp = document.getElementById('inp');
-  const q = (textArg || inp.value).trim();
-  if (!q || loading) return;
-  inp.value = ''; inp.style.height = 'auto';
-  document.getElementById('sendbtn').disabled = true;
+  const inp=document.getElementById('inp');
+  const q=(textArg||inp.value).trim();
+  if(!q||loading) return;
+  inp.value=''; inp.style.height='auto';
+  document.getElementById('sendbtn').disabled=true;
   addUserMsg(q); setLoading(true); showStatusMsg('Analyzing your data...');
   try {
-    const r = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question:q, history:history.slice(-6)}) });
-    const data = await r.json();
-    if (data.error) throw new Error(data.error);
-    history.push({role:'user',content:q}); history.push({role:'assistant',content:data.answer});
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history:chatHistory.slice(-6)})});
+    const data=await r.json();
+    if(data.error) throw new Error(data.error);
+    chatHistory.push({role:'user',content:q}); chatHistory.push({role:'assistant',content:data.answer});
     addCoachMsg(data.answer, data.queries_run);
-  } catch(e) { addCoachMsg('Error: ' + e.message, []); }
+  } catch(e) { addCoachMsg('Error: '+e.message,[]); }
   setLoading(false); document.getElementById('inp').focus();
 }
 
 // ── Dashboard ─────────────────────────────────────────────────
-let dashLoaded = false;
 async function loadDashboard() {
-  if (dashLoaded) return;
   dashLoaded = true;
   try {
     const r = await fetch('/api/dashboard');
     const d = await r.json();
-    if (d.error) return;
+    if (d.error) { dashLoaded=false; return; }
 
+    // Phase
     if (d.phase) {
       document.getElementById('db-phase-name').textContent = d.phase.name;
       document.getElementById('db-phase-goal').textContent = d.phase.goal;
       const days = d.phase.days_remaining;
       document.getElementById('db-phase-days').textContent = days > 0 ? `${days} days remaining` : 'Phase complete';
     }
+
+    // Nutrition alert
     if (d.missing_nutrition && d.missing_nutrition.length) {
       const alert = document.getElementById('nutrition-alert');
       alert.style.display = 'block';
-      alert.textContent = `⚠ Missing nutrition log for: ${d.missing_nutrition.join(', ')}. Log your food to track body composition progress.`;
+      alert.textContent = `⚠ Missing nutrition log for: ${d.missing_nutrition.join(', ')}`;
     }
+
+    // Body comp
     if (d.body_comp) {
       const b = d.body_comp;
       bcData = await fetch('/api/body_comp_history').then(r=>r.json()).catch(()=>[]);
       const bfDiff = (b.body_fat_pct - 15).toFixed(1);
       document.getElementById('body-comp-cards').innerHTML = `
-        <div class="card clickable ${b.body_fat_pct > 20 ? 'warn' : b.body_fat_pct < 15 ? 'good' : ''}" onclick="openBodyCompModal('body_fat_pct')">
-          <div class="label">Body Fat ↗</div>
-          <div class="value">${b.body_fat_pct}<span class="unit">%</span></div>
-          <div class="sub">${bfDiff > 0 ? '+' : ''}${bfDiff}% from target</div>
-        </div>
-        <div class="card clickable ${b.skeletal_muscle_mass_lb >= 105 ? 'good' : ''}" onclick="openBodyCompModal('skeletal_muscle_mass_lb')">
-          <div class="label">Muscle Mass ↗</div>
-          <div class="value">${b.skeletal_muscle_mass_lb}<span class="unit">lbs</span></div>
-          <div class="sub">Target 105-110 lbs</div>
-        </div>
+        <div class="card clickable ${b.body_fat_pct>20?'warn':b.body_fat_pct<15?'good':''}" onclick="openBodyCompModal('body_fat_pct')">
+          <div class="label">Body Fat ↗</div><div class="value">${b.body_fat_pct}<span class="unit">%</span></div>
+          <div class="sub">${bfDiff>0?'+':''}${bfDiff}% from target</div></div>
+        <div class="card clickable ${b.skeletal_muscle_mass_lb>=105?'good':''}" onclick="openBodyCompModal('skeletal_muscle_mass_lb')">
+          <div class="label">Muscle Mass ↗</div><div class="value">${b.skeletal_muscle_mass_lb}<span class="unit">lbs</span></div>
+          <div class="sub">Target 105-110 lbs</div></div>
         <div class="card clickable" onclick="openBodyCompModal('weight_lb')">
-          <div class="label">Weight ↗</div>
-          <div class="value">${b.weight_lb}<span class="unit">lbs</span></div>
-          <div class="sub">${b.date}</div>
-        </div>
-        <div class="card clickable ${b.inbody_score >= 90 ? 'good' : ''}" onclick="openBodyCompModal('inbody_score')">
-          <div class="label">InBody Score ↗</div>
-          <div class="value">${b.inbody_score}</div>
-          <div class="sub">Visceral fat: ${b.visceral_fat_level}</div>
-        </div>`;
+          <div class="label">Weight ↗</div><div class="value">${b.weight_lb}<span class="unit">lbs</span></div>
+          <div class="sub">${b.date}</div></div>
+        <div class="card clickable ${b.inbody_score>=90?'good':''}" onclick="openBodyCompModal('inbody_score')">
+          <div class="label">InBody Score ↗</div><div class="value">${b.inbody_score}</div>
+          <div class="sub">Visceral fat: ${b.visceral_fat_level}</div></div>`;
     }
+
+    // Activity cards + day chart
     if (d.activity && d.activity.length) {
       const totals = d.activity.reduce((acc,day) => {
-        acc.run += day.run_min||0; acc.ride += day.ride_min||0;
-        acc.strength += day.strength_min||0; acc.cardio += day.cardio_min||0;
-        acc.z2 += day.z2_min||0;
+        acc.run+=day.run_min||0; acc.ride+=day.ride_min||0;
+        acc.strength+=day.strength_min||0; acc.cardio+=day.cardio_min||0; acc.z2+=day.z2_min||0;
         return acc;
       }, {run:0,ride:0,strength:0,cardio:0,z2:0});
       document.getElementById('activity-cards').innerHTML = `
@@ -546,19 +551,17 @@ async function loadDashboard() {
         <div class="card good"><div class="label">Z2 Time</div><div class="value">${Math.round(totals.z2)}<span class="unit">min</span></div></div>`;
 
       window.workoutsByDate = {};
-      (d.workouts || []).forEach(w => { if (!window.workoutsByDate[w.date]) window.workoutsByDate[w.date]=[]; window.workoutsByDate[w.date].push(w); });
+      (d.workouts||[]).forEach(w => { if(!window.workoutsByDate[w.date]) window.workoutsByDate[w.date]=[]; window.workoutsByDate[w.date].push(w); });
 
       const maxMin = Math.max(...d.activity.map(a=>(a.run_min||0)+(a.ride_min||0)+(a.strength_min||0)+(a.cardio_min||0)+(a.walk_min||0)),1);
-      const chart = document.getElementById('week-chart');
-      chart.innerHTML = d.activity.map(day => {
-        const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
-        const pct = v => Math.round(v/maxMin*100);
-        const [y,m,d] = day.date.split('-');
-        const dayLabel = (parseInt(m)) + '/' + parseInt(d);
-        const hasW = window.workoutsByDate[day.date] && window.workoutsByDate[day.date].length > 0;
-        const clickable = hasW ? `onclick="event.stopPropagation();openDayWorkouts('${day.date}',window.workoutsByDate['${day.date}']||[])" style="cursor:pointer"` : '';
-        return `<div class="day-row ${hasW?'hover-day':''}" ${clickable} title="${hasW?'Click to view workouts':''}">
-          <div class="day-label" style="color:${hasW?'var(--text)':'var(--dim)'}">${dayLabel}</div>
+      document.getElementById('week-chart').innerHTML = d.activity.map(day => {
+        const total=(day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
+        const pct=v=>Math.round(v/maxMin*100);
+        const label = dateLabel(day.date);
+        const hasW=window.workoutsByDate[day.date]&&window.workoutsByDate[day.date].length>0;
+        const clickable=hasW?`onclick="openDayWorkouts('${day.date}',window.workoutsByDate['${day.date}']||[])" style="cursor:pointer"`:'';
+        return `<div class="day-row ${hasW?'hover-day':''}" ${clickable}>
+          <div class="day-label" style="color:${hasW?'var(--text)':'var(--dim)'}">${label}</div>
           <div class="bar-group">
             ${day.run_min>0?`<div class="bar run" style="width:${pct(day.run_min)}%" title="Run: ${Math.round(day.run_min)}min"></div>`:''}
             ${day.ride_min>0?`<div class="bar ride" style="width:${pct(day.ride_min)}%" title="Ride: ${Math.round(day.ride_min)}min"></div>`:''}
@@ -570,217 +573,161 @@ async function loadDashboard() {
         </div>`;
       }).join('');
     }
-    loadZoneChart(d.activity);
-    loadTrainingLoad();
+
+    // Recovery
     if (d.health && d.health.length) {
-      const recent = d.health[0];
-      const avgHrv = d.health.filter(h=>h.hrv_ms).reduce((s,h)=>s+h.hrv_ms,0)/(d.health.filter(h=>h.hrv_ms).length||1);
+      const recent=d.health[0];
+      const hWithHrv=d.health.filter(h=>h.hrv_ms);
+      const avgHrv=hWithHrv.length?hWithHrv.reduce((s,h)=>s+h.hrv_ms,0)/hWithHrv.length:0;
       document.getElementById('recovery-cards').innerHTML = `
-        <div class="card ${recent.resting_hr_bpm > 60 ? 'warn' : 'good'}"><div class="label">Resting HR</div><div class="value">${recent.resting_hr_bpm||'—'}<span class="unit">bpm</span></div><div class="sub">${recent.date}</div></div>
+        <div class="card ${recent.resting_hr_bpm>60?'warn':'good'}"><div class="label">Resting HR</div><div class="value">${recent.resting_hr_bpm||'—'}<span class="unit">bpm</span></div><div class="sub">${recent.date}</div></div>
         <div class="card ${avgHrv>50?'good':avgHrv<30?'warn':''}"><div class="label">Avg HRV</div><div class="value">${Math.round(avgHrv)||'—'}<span class="unit">ms</span></div><div class="sub">7-day avg</div></div>`;
     }
+
+    // Nutrition summary
     if (d.nutrition && d.nutrition.length) {
-      const avgCal = d.nutrition.reduce((s,n)=>s+(n.calories_kcal||0),0)/d.nutrition.length;
-      const avgPro = d.nutrition.reduce((s,n)=>s+(n.protein_g||0),0)/d.nutrition.length;
+      const avgCal=d.nutrition.reduce((s,n)=>s+(n.calories_kcal||0),0)/d.nutrition.length;
+      const avgPro=d.nutrition.reduce((s,n)=>s+(n.protein_g||0),0)/d.nutrition.length;
       document.getElementById('nutrition-cards').innerHTML = `
         <div class="card ${avgCal<1800?'warn':''}"><div class="label">Avg Calories</div><div class="value">${Math.round(avgCal)}<span class="unit">kcal</span></div><div class="sub">${d.nutrition.length} days logged</div></div>
         <div class="card ${avgPro<150?'warn':'good'}"><div class="label">Avg Protein</div><div class="value">${Math.round(avgPro)}<span class="unit">g</span></div><div class="sub">Target: 160-180g</div></div>`;
     } else {
       document.getElementById('nutrition-cards').innerHTML = `<div class="card warn"><div class="label">Nutrition</div><div class="value" style="font-size:14px">No data logged</div></div>`;
     }
-  } catch(e) { console.error('Dashboard error:', e); }
+
+    loadZoneChart(d.activity);
+    loadTrainingLoad();
+
+  } catch(e) { console.error('Dashboard error:', e); dashLoaded=false; }
 }
 
 // ── Body comp modal ───────────────────────────────────────────
 const BC_META = {
-  body_fat_pct:             { label:'Body Fat %',    unit:'%',   color:'#c8a96e', target:15,  targetLabel:'Target: <15%' },
-  weight_lb:                { label:'Weight',         unit:'lbs', color:'#4a6fa5', target:null, targetLabel:'' },
-  skeletal_muscle_mass_lb:  { label:'Muscle Mass',   unit:'lbs', color:'#4a7c59', target:105, targetLabel:'Target: 105-110 lbs' },
-  inbody_score:             { label:'InBody Score',  unit:'',    color:'#7a4a8a', target:null, targetLabel:'' },
+  body_fat_pct:            {label:'Body Fat %',  unit:'%',   color:'#c8a96e', target:15},
+  weight_lb:               {label:'Weight',       unit:'lbs', color:'#4a6fa5', target:null},
+  skeletal_muscle_mass_lb: {label:'Muscle Mass',  unit:'lbs', color:'#4a7c59', target:105},
+  inbody_score:            {label:'InBody Score', unit:'',    color:'#7a4a8a', target:null},
 };
 
 function openBodyCompModal(metric) {
   bcMetric = metric;
   document.querySelectorAll('.bc-metric-btn').forEach(b => {
-    const m = b.getAttribute('onclick').match(/'([^']+)'/)?.[1];
-    b.classList.toggle('active', m === metric);
+    const m=b.getAttribute('onclick').match(/'([^']+)'/)?.[1];
+    b.classList.toggle('active', m===metric);
   });
-  document.getElementById('bc-modal-title').textContent = BC_META[metric]?.label || metric;
+  document.getElementById('bc-modal-title').textContent = BC_META[metric]?.label||metric;
   document.getElementById('body-comp-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow='hidden';
   renderBCChart(metric);
 }
 
 function renderBCChart(metric) {
-  const meta = BC_META[metric] || {};
-  const canvas = document.getElementById('bc-canvas');
-  const wrap   = document.getElementById('bc-canvas-wrap');
-  const data   = (bcData || []).filter(d => d[metric] != null);
-
-  if (!data.length) {
-    document.getElementById('bc-data-points').textContent = 'No data available.';
-    return;
-  }
-
-  canvas.width  = wrap.offsetWidth * window.devicePixelRatio;
-  canvas.height = wrap.offsetHeight * window.devicePixelRatio;
-  canvas.style.width  = wrap.offsetWidth + 'px';
-  canvas.style.height = wrap.offsetHeight + 'px';
-
-  const ctx = canvas.getContext('2d');
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  ctx.clearRect(0, 0, wrap.offsetWidth, wrap.offsetHeight);
-
-  const W = wrap.offsetWidth, H = wrap.offsetHeight;
-  const pad = {top:20, right:20, bottom:40, left:44};
-  const cW = W - pad.left - pad.right;
-  const cH = H - pad.top  - pad.bottom;
-
-  const vals   = data.map(d => parseFloat(d[metric]));
-  const minVal = Math.min(...vals) * 0.97;
-  const maxVal = Math.max(...vals) * 1.03;
-  const range  = maxVal - minVal || 1;
-
-  const xScale = i => pad.left + (i / (data.length - 1 || 1)) * cW;
-  const yScale = v => pad.top + cH - ((v - minVal) / range) * cH;
-
-  // Target line
-  if (meta.target) {
-    const ty = yScale(meta.target);
-    if (ty >= pad.top && ty <= pad.top + cH) {
-      ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
-      ctx.beginPath(); ctx.moveTo(pad.left, ty); ctx.lineTo(pad.left+cW, ty); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = '#555'; ctx.font = '10px Georgia'; ctx.textAlign = 'right';
-      ctx.fillText('Target', pad.left - 4, ty + 3);
+  const meta=BC_META[metric]||{};
+  const canvas=document.getElementById('bc-canvas');
+  const wrap=document.getElementById('bc-canvas-wrap');
+  const data=(bcData||[]).filter(d=>d[metric]!=null);
+  if(!data.length){document.getElementById('bc-data-points').textContent='No data available.';return;}
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=wrap.offsetWidth*dpr; canvas.height=wrap.offsetHeight*dpr;
+  canvas.style.width=wrap.offsetWidth+'px'; canvas.style.height=wrap.offsetHeight+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,wrap.offsetWidth,wrap.offsetHeight);
+  const W=wrap.offsetWidth,H=wrap.offsetHeight,pad={top:20,right:20,bottom:40,left:44};
+  const cW=W-pad.left-pad.right,cH=H-pad.top-pad.bottom;
+  const vals=data.map(d=>parseFloat(d[metric]));
+  const minVal=Math.min(...vals)*0.97,maxVal=Math.max(...vals)*1.03,range=maxVal-minVal||1;
+  const xScale=i=>pad.left+(i/(data.length-1||1))*cW;
+  const yScale=v=>pad.top+cH-((v-minVal)/range)*cH;
+  if(meta.target){
+    const ty=yScale(meta.target);
+    if(ty>=pad.top&&ty<=pad.top+cH){
+      ctx.strokeStyle='#3a3a3a';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+      ctx.beginPath();ctx.moveTo(pad.left,ty);ctx.lineTo(pad.left+cW,ty);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#555';ctx.font='10px Georgia';ctx.textAlign='right';
+      ctx.fillText('Target',pad.left-4,ty+3);
     }
   }
-
-  // Gradient fill under line
-  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
-  grad.addColorStop(0, meta.color + '40');
-  grad.addColorStop(1, meta.color + '00');
+  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+cH);
+  grad.addColorStop(0,meta.color+'40');grad.addColorStop(1,meta.color+'00');
   ctx.beginPath();
-  data.forEach((d, i) => { if (i===0) ctx.moveTo(xScale(i), yScale(vals[i])); else ctx.lineTo(xScale(i), yScale(vals[i])); });
-  ctx.lineTo(xScale(data.length-1), pad.top+cH);
-  ctx.lineTo(xScale(0), pad.top+cH);
-  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
-
-  // Line (curved)
-  ctx.beginPath(); ctx.strokeStyle = meta.color; ctx.lineWidth = 2.5;
-  data.forEach((d, i) => {
-    const x = xScale(i), y = yScale(vals[i]);
-    if (i === 0) { ctx.moveTo(x, y); return; }
-    const px = xScale(i-1), py = yScale(vals[i-1]);
-    const cpx = (px + x) / 2;
-    ctx.bezierCurveTo(cpx, py, cpx, y, x, y);
+  data.forEach((d,i)=>{if(i===0)ctx.moveTo(xScale(i),yScale(vals[i]));else ctx.lineTo(xScale(i),yScale(vals[i]));});
+  ctx.lineTo(xScale(data.length-1),pad.top+cH);ctx.lineTo(xScale(0),pad.top+cH);
+  ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();ctx.strokeStyle=meta.color;ctx.lineWidth=2.5;
+  data.forEach((d,i)=>{
+    const x=xScale(i),y=yScale(vals[i]);
+    if(i===0){ctx.moveTo(x,y);return;}
+    const px=xScale(i-1),py=yScale(vals[i-1]),cpx=(px+x)/2;
+    ctx.bezierCurveTo(cpx,py,cpx,y,x,y);
+  });ctx.stroke();
+  ctx.font='10px Georgia';ctx.textAlign='center';
+  data.forEach((d,i)=>{
+    const x=xScale(i),y=yScale(vals[i]);
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=meta.color;ctx.fill();
+    ctx.fillStyle='#aaa';ctx.fillText(vals[i].toFixed(metric==='inbody_score'?0:1)+(meta.unit||''),x,y-10);
   });
-  ctx.stroke();
-
-  // Data points + labels
-  ctx.font = '10px Georgia'; ctx.textAlign = 'center';
-  data.forEach((d, i) => {
-    const x = xScale(i), y = yScale(vals[i]);
-    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fillStyle = meta.color; ctx.fill();
-    ctx.fillStyle = '#aaa';
-    ctx.fillText(vals[i].toFixed(metric === 'inbody_score' ? 0 : 1) + (meta.unit||''), x, y - 10);
+  ctx.fillStyle='#444';ctx.textAlign='center';
+  data.forEach((d,i)=>{
+    const [y,m,day]=d.date.split('-');
+    ctx.fillText(parseInt(m)+'/'+parseInt(day),xScale(i),H-8);
   });
-
-  // X axis dates
-  ctx.fillStyle = '#444'; ctx.textAlign = 'center';
-  data.forEach((d, i) => {
-    const dt = new Date(d.date);
-    const label = (dt.getMonth()+1) + '/' + dt.getDate();
-    ctx.fillText(label, xScale(i), H - 8);
-  });
-
-  // Y axis labels
-  ctx.textAlign = 'right';
-  [minVal, (minVal+maxVal)/2, maxVal].forEach(v => {
-    const y = yScale(v);
-    ctx.fillText(v.toFixed(1), pad.left - 6, y + 3);
-  });
-
-  // Data points summary
-  document.getElementById('bc-data-points').innerHTML = data.map(d =>
-    `<span style="margin-right:16px">${d.date}: <strong>${parseFloat(d[metric]).toFixed(1)}${meta.unit}</strong></span>`
-  ).join('');
+  ctx.textAlign='right';
+  [minVal,(minVal+maxVal)/2,maxVal].forEach(v=>{ctx.fillText(v.toFixed(1),pad.left-6,yScale(v)+3);});
+  document.getElementById('bc-data-points').innerHTML=data.map(d=>`<span style="margin-right:16px">${d.date}: <strong>${parseFloat(d[metric]).toFixed(1)}${meta.unit||''}</strong></span>`).join('');
 }
 
-function showBCMetric(metric, btn) {
-  document.querySelectorAll('.bc-metric-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  bcMetric = metric;
-  document.getElementById('bc-modal-title').textContent = BC_META[metric]?.label || metric;
+function showBCMetric(metric,btn) {
+  document.querySelectorAll('.bc-metric-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); bcMetric=metric;
+  document.getElementById('bc-modal-title').textContent=BC_META[metric]?.label||metric;
   renderBCChart(metric);
 }
-
-function closeBodyCompModal() {
-  document.getElementById('body-comp-modal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function closeBCModal(e) { if (e.target === document.getElementById('body-comp-modal')) closeBodyCompModal(); }
+function closeBodyCompModal() {document.getElementById('body-comp-modal').classList.remove('open');document.body.style.overflow='';}
+function closeBCModal(e) {if(e.target===document.getElementById('body-comp-modal'))closeBodyCompModal();}
 
 // ── Zone chart ────────────────────────────────────────────────
 async function loadZoneChart(activityData) {
-  const chart = document.getElementById('zone-chart');
-  const rationale = document.getElementById('zone-rationale');
-  chart.innerHTML = '<div class="spinner"></div>';
+  const chart=document.getElementById('zone-chart');
+  chart.innerHTML='<div class="spinner"></div>';
   try {
-    const actual = {z1:0,z2:0,z3:0,z4:0,z5:0};
-    if (activityData) activityData.forEach(day => { actual.z1+=day.z1_min||0; actual.z2+=day.z2_min||0; actual.z3+=day.z3_min||0; actual.z4+=day.z4_min||0; actual.z5+=day.z5_min||0; });
-    const r = await fetch('/api/zone_goals');
-    const goals = await r.json();
-    const zones = [
-      {key:'z1',label:'Z1',color:'#555',name:'Recovery'},
-      {key:'z2',label:'Z2',color:'#4a7c59',name:'Aerobic'},
-      {key:'z3',label:'Z3',color:'#c8a96e',name:'Tempo'},
-      {key:'z4',label:'Z4',color:'#c07040',name:'Threshold'},
-      {key:'z5',label:'Z5',color:'#a03030',name:'Max'},
-    ];
-    const maxVal = Math.max(...zones.map(z => Math.max(actual[z.key]||0,goals[z.key]||0)),1);
-    chart.innerHTML = zones.map(z => {
-      const act=Math.round(actual[z.key]||0), goal=goals[z.key]||0;
-      const actPct=Math.round(act/maxVal*100), goalPct=Math.round(goal/maxVal*100);
-      const status = act>=goal?'✓':act>=goal*.8?'~':'';
-      const statusColor = act>=goal?'var(--green)':act>=goal*.8?'var(--gold)':'var(--dim)';
-      return `<div class="zone-row">
-        <div class="zone-label" title="${z.name}">${z.label}</div>
-        <div class="zone-bar-wrap">
-          <div class="zone-bar-actual" style="width:${actPct}%;background:${z.color}"></div>
-          <div class="zone-goal-line" style="left:${goalPct}%"></div>
-        </div>
+    const actual={z1:0,z2:0,z3:0,z4:0,z5:0};
+    if(activityData) activityData.forEach(day=>{actual.z1+=day.z1_min||0;actual.z2+=day.z2_min||0;actual.z3+=day.z3_min||0;actual.z4+=day.z4_min||0;actual.z5+=day.z5_min||0;});
+    const r=await fetch('/api/zone_goals');
+    const goals=await r.json();
+    const zones=[{key:'z1',label:'Z1',color:'#555'},{key:'z2',label:'Z2',color:'#4a7c59'},{key:'z3',label:'Z3',color:'#c8a96e'},{key:'z4',label:'Z4',color:'#c07040'},{key:'z5',label:'Z5',color:'#a03030'}];
+    const maxVal=Math.max(...zones.map(z=>Math.max(actual[z.key]||0,goals[z.key]||0)),1);
+    chart.innerHTML=zones.map(z=>{
+      const act=Math.round(actual[z.key]||0),goal=goals[z.key]||0;
+      const actPct=Math.round(act/maxVal*100),goalPct=Math.round(goal/maxVal*100);
+      const status=act>=goal?'✓':act>=goal*.8?'~':'';
+      const statusColor=act>=goal?'var(--green)':act>=goal*.8?'var(--gold)':'var(--dim)';
+      return `<div class="zone-row"><div class="zone-label">${z.label}</div>
+        <div class="zone-bar-wrap"><div class="zone-bar-actual" style="width:${actPct}%;background:${z.color}"></div><div class="zone-goal-line" style="left:${goalPct}%"></div></div>
         <div class="zone-nums"><div class="zone-actual-num">${act}m</div><div class="zone-goal-num">/ ${goal}m</div></div>
-        <div class="zone-status" style="color:${statusColor}">${status}</div>
-      </div>`;
+        <div class="zone-status" style="color:${statusColor}">${status}</div></div>`;
     }).join('');
-    if (goals.rationale) rationale.textContent = goals.rationale;
-  } catch(e) { chart.textContent = 'Could not load zone goals.'; }
+    if(goals.rationale) document.getElementById('zone-rationale').textContent=goals.rationale;
+  } catch(e) {chart.textContent='Could not load zone goals.';}
 }
 
 // ── Training load chart ───────────────────────────────────────
 async function loadTrainingLoad() {
   try {
-    const r = await fetch('/api/training_load');
-    const d = await r.json();
-    if (d.error || !d.data || !d.data.length) return;
-    const data = d.data, current = d.current;
-    const tsb = current.tsb || 0;
-    const tsbColor = tsb>5?'var(--green)':tsb<-30?'#a03030':tsb<-10?'var(--gold)':'var(--text)';
-    const tsbLabel = tsb>5?'Fresh':tsb<-30?'High Fatigue':tsb<-10?'Productive Load':'Neutral';
-    document.getElementById('tl-current-stats').innerHTML = `
+    const r=await fetch('/api/training_load');
+    const d=await r.json();
+    if(d.error||!d.data||!d.data.length) return;
+    const data=d.data,current=d.current,tsb=current.tsb||0;
+    const tsbColor=tsb>5?'var(--green)':tsb<-30?'#a03030':tsb<-10?'var(--gold)':'var(--text)';
+    const tsbLabel=tsb>5?'Fresh':tsb<-30?'High Fatigue':tsb<-10?'Productive Load':'Neutral';
+    document.getElementById('tl-current-stats').innerHTML=`
       <div class="tl-stat"><div class="label">CTL — Fitness</div><div class="value" style="color:#c8a96e">${current.ctl}</div></div>
       <div class="tl-stat"><div class="label">ATL — Fatigue</div><div class="value" style="color:#a03030">${current.atl}</div></div>
       <div class="tl-stat"><div class="label">TSB — Form</div><div class="value" style="color:${tsbColor}">${current.tsb>0?'+':''}${current.tsb} (${tsbLabel})</div></div>
       <div class="tl-stat"><div class="label">Today TSS</div><div class="value">${current.tss}</div></div>`;
-    const canvas = document.getElementById('tl-canvas');
-    const wrap   = document.getElementById('tl-canvas-wrap');
-    canvas.width  = wrap.offsetWidth * window.devicePixelRatio;
-    canvas.height = wrap.offsetHeight * window.devicePixelRatio;
-    canvas.style.width  = wrap.offsetWidth + 'px';
-    canvas.style.height = wrap.offsetHeight + 'px';
-    const ctx = canvas.getContext('2d');
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const canvas=document.getElementById('tl-canvas'),wrap=document.getElementById('tl-canvas-wrap');
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=wrap.offsetWidth*dpr;canvas.height=wrap.offsetHeight*dpr;
+    canvas.style.width=wrap.offsetWidth+'px';canvas.style.height=wrap.offsetHeight+'px';
+    const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
     const W=wrap.offsetWidth,H=wrap.offsetHeight,pad={top:10,right:10,bottom:24,left:36};
     const cW=W-pad.left-pad.right,cH=H-pad.top-pad.bottom;
     const allVals=data.flatMap(d=>[d.ctl,d.atl,d.tsb]);
@@ -790,211 +737,302 @@ async function loadTrainingLoad() {
     const zeroY=yScale(0);
     ctx.strokeStyle='#2a2a2a';ctx.lineWidth=1;ctx.setLineDash([4,4]);
     ctx.beginPath();ctx.moveTo(pad.left,zeroY);ctx.lineTo(pad.left+cW,zeroY);ctx.stroke();ctx.setLineDash([]);
-    ctx.beginPath();data.forEach((d,i)=>{ if(i===0)ctx.moveTo(xScale(i),yScale(d.tsb));else ctx.lineTo(xScale(i),yScale(d.tsb)); });
+    ctx.beginPath();data.forEach((d,i)=>{if(i===0)ctx.moveTo(xScale(i),yScale(d.tsb));else ctx.lineTo(xScale(i),yScale(d.tsb));});
     ctx.lineTo(xScale(data.length-1),zeroY);ctx.lineTo(xScale(0),zeroY);ctx.closePath();
     ctx.fillStyle='rgba(74,124,89,0.15)';ctx.fill();
-    const drawLine=(key,color,width)=>{ ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=width; data.forEach((d,i)=>{ if(i===0)ctx.moveTo(xScale(i),yScale(d[key]));else ctx.lineTo(xScale(i),yScale(d[key])); });ctx.stroke(); };
-    drawLine('tsb','#4a7c59',1.5);drawLine('atl','#a03030',1.5);drawLine('ctl','#c8a96e',2);
+    [[data,'tsb','#4a7c59',1.5],[data,'atl','#a03030',1.5],[data,'ctl','#c8a96e',2]].forEach(([d,key,color,lw])=>{
+      ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=lw;
+      d.forEach((pt,i)=>{if(i===0)ctx.moveTo(xScale(i),yScale(pt[key]));else ctx.lineTo(xScale(i),yScale(pt[key]));});
+      ctx.stroke();
+    });
     ctx.fillStyle='#444';ctx.font='10px Georgia';ctx.textAlign='right';
-    [0,Math.round(maxVal*.5),Math.round(maxVal),Math.round(minVal*.5)].forEach(v=>{ const y=yScale(v); if(y>=pad.top&&y<=pad.top+cH) ctx.fillText(v,pad.left-4,y+3); });
+    [0,Math.round(maxVal*.5),Math.round(maxVal),Math.round(minVal*.5)].forEach(v=>{
+      const y=yScale(v);if(y>=pad.top&&y<=pad.top+cH) ctx.fillText(v,pad.left-4,y+3);
+    });
     ctx.textAlign='center';
-    data.forEach((d,i)=>{ if(i%14===0){ const dt=new Date(d.date); ctx.fillText((dt.getMonth()+1)+'/'+dt.getDate(),xScale(i),H-6); } });
-  } catch(e) { console.error('Training load error:',e); }
+    data.forEach((d,i)=>{
+      if(i%14===0){const [y,m,day]=d.date.split('-');ctx.fillText(parseInt(m)+'/'+parseInt(day),xScale(i),H-6);}
+    });
+  } catch(e){console.error('Training load error:',e);}
 }
 
-// ── Records tab ───────────────────────────────────────────────
-let recordsLoaded = false;
+// ── Records ───────────────────────────────────────────────────
 async function loadRecords() {
-  if (recordsLoaded) return;
   recordsLoaded = true;
   try {
-    const r = await fetch('/api/records');
-    const d = await r.json();
-    renderPRTable('run-prs', d.runs || [], 'Running');
-    renderPRTable('ride-prs', d.rides || [], 'Cycling');
-  } catch(e) {
-    document.getElementById('run-prs').textContent = 'Error loading records.';
-  }
+    const r=await fetch('/api/records');
+    const d=await r.json();
+    renderPRTable('run-prs', d.runs||[], 'Running');
+    renderPRTable('ride-prs', d.rides||[], 'Cycling');
+  } catch(e) { document.getElementById('run-prs').textContent='Error loading records.'; }
 }
 
 function renderPRTable(elId, prs, sport) {
-  const el = document.getElementById(elId);
-  if (!prs.length) { el.innerHTML = '<p style="color:var(--dim);font-size:12px">No records found.</p>'; return; }
-
-  const byDist = {};
-  prs.forEach(p => {
-    if (!byDist[p.distance_label]) byDist[p.distance_label] = [];
-    byDist[p.distance_label].push(p);
-  });
-
-  const isRun = sport === 'Running';
-  const dists = Object.keys(byDist);
-  let html = '<div class="pr-grid">';
-
-  dists.forEach(dist => {
-    const rows = byDist[dist];
-    const best = rows.find(r => r.rank === 1);
-    const bestDisplay = best ? (best.best_pace_display || formatTime(best.best_time_sec)) : '—';
-    const paceLabel = isRun ? 'Pace / Time' : 'Time';
-
-    html += `<div class="pr-distance-card">
-      <div class="pr-distance-header">
-        <span class="pr-distance-label">🏅 ${dist}</span>
-        <span class="pr-distance-best">${bestDisplay}</span>
-      </div>
-      <table class="pr-table">
-        <thead><tr><th>Rank</th><th>${paceLabel}</th><th>Date</th></tr></thead>
-        <tbody>`;
-
-    rows.forEach(p => {
-      const rankClass = p.rank === 1 ? 'pr-rank-1' : p.rank === 2 ? 'pr-rank-2' : p.rank === 3 ? 'pr-rank-3' : '';
-      const medal = p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : `#${p.rank}`;
-      const hasActivity = p.activity_id && p.activity_id !== null;
-      const rowAttrs = hasActivity
-        ? `class="clickable" style="cursor:pointer" onclick="openWorkout(${p.activity_id}, '${dist.replace(/'/g,'')} ${p.achieved_date||''}')"` 
-        : '';
-      html += `<tr ${rowAttrs}>
-        <td class="${rankClass}">${medal}</td>
-        <td class="${rankClass}">${p.best_pace_display || formatTime(p.best_time_sec)}${hasActivity ? ' <span style="color:var(--dim);font-size:10px">›</span>' : ''}</td>
-        <td style="color:var(--dim);font-size:11px">${p.achieved_date || '—'}</td>
-      </tr>`;
+  const el=document.getElementById(elId);
+  if(!prs.length){el.innerHTML='<p style="color:var(--dim);font-size:12px">No records found.</p>';return;}
+  const byDist={};
+  prs.forEach(p=>{if(!byDist[p.distance_label])byDist[p.distance_label]=[];byDist[p.distance_label].push(p);});
+  const isRun=sport==='Running';
+  let html='<div class="pr-grid">';
+  Object.keys(byDist).forEach(dist=>{
+    const rows=byDist[dist];
+    const best=rows.find(r=>r.rank===1);
+    const bestDisplay=best?(best.best_pace_display||formatTime(best.best_time_sec)):'—';
+    html+=`<div class="pr-distance-card">
+      <div class="pr-distance-header"><span class="pr-distance-label">🏅 ${dist}</span><span class="pr-distance-best">${bestDisplay}</span></div>
+      <table class="pr-table"><thead><tr><th>Rank</th><th>${isRun?'Pace / Time':'Time'}</th><th>Date</th></tr></thead><tbody>`;
+    rows.forEach(p=>{
+      const rankClass=p.rank===1?'pr-rank-1':p.rank===2?'pr-rank-2':p.rank===3?'pr-rank-3':'';
+      const medal=p.rank===1?'🥇':p.rank===2?'🥈':p.rank===3?'🥉':`#${p.rank}`;
+      const hasActivity=p.activity_id&&p.activity_id!==null;
+      const rowAttrs=hasActivity?`class="clickable" onclick="openWorkout(${p.activity_id},'${dist.replace(/'/g,'')} ${p.achieved_date||''}')"` :'';
+      html+=`<tr ${rowAttrs}><td class="${rankClass}">${medal}</td>
+        <td class="${rankClass}">${p.best_pace_display||formatTime(p.best_time_sec)}${hasActivity?' <span style="color:var(--dim);font-size:10px">›</span>':''}</td>
+        <td style="color:var(--dim);font-size:11px">${p.achieved_date||'—'}</td></tr>`;
     });
-
-    html += `</tbody></table></div>`;
+    html+=`</tbody></table></div>`;
   });
-
-  html += '</div>';
-  el.innerHTML = html;
+  html+='</div>';
+  el.innerHTML=html;
 }
 
 function formatTime(sec) {
-  if (!sec) return '—';
-  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
-  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if(!sec) return '—';
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  if(h>0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   return `${m}:${String(s).padStart(2,'0')}`;
 }
 
-// ── KPI tab ───────────────────────────────────────────────────
-let kpiLoaded = false;
+// ── KPIs ──────────────────────────────────────────────────────
 async function loadKPIs() {
-  if (kpiLoaded) return;
   kpiLoaded = true;
-  document.getElementById('kpi-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('kpi-date').value=new Date().toISOString().slice(0,10);
   await refreshKPICharts();
 }
 
 async function refreshKPICharts() {
-  const container = document.getElementById('kpi-charts');
+  const container=document.getElementById('kpi-charts');
   try {
-    const r = await fetch('/api/performance_tests');
-    const tests = await r.json();
-    if (!tests.length) { container.innerHTML = '<p style="color:var(--dim);font-size:12px">No performance tests logged yet. Use the form above to add your first test.</p>'; return; }
-    // Group by test_type
-    const byType = {};
-    tests.forEach(t => { if (!byType[t.test_type]) byType[t.test_type]=[]; byType[t.test_type].push(t); });
-    container.innerHTML = Object.keys(byType).map(type => {
-      const items = byType[type].sort((a,b) => a.date.localeCompare(b.date));
-      const latest = items[items.length-1];
-      const best = items.reduce((b,t) => t.value > b.value ? t : b, items[0]);
-      const maxVal = Math.max(...items.map(t=>t.value));
-      const bars = items.map(t => {
-        const h = Math.round(t.value/maxVal*100);
+    const r=await fetch('/api/performance_tests');
+    const tests=await r.json();
+    if(!tests.length){container.innerHTML='<p style="color:var(--dim);font-size:12px">No tests logged yet.</p>';return;}
+    const byType={};
+    tests.forEach(t=>{if(!byType[t.test_type])byType[t.test_type]=[];byType[t.test_type].push(t);});
+    container.innerHTML=Object.keys(byType).map(type=>{
+      const items=byType[type].sort((a,b)=>a.date.localeCompare(b.date));
+      const latest=items[items.length-1];
+      const best=items.reduce((b,t)=>t.value>b.value?t:b,items[0]);
+      const maxVal=Math.max(...items.map(t=>t.value));
+      const bars=items.map(t=>{
+        const h=Math.round(t.value/maxVal*100);
         return `<div class="kpi-bar-wrap" title="${t.date}: ${t.value} ${t.unit||''}">
           <div class="kpi-bar-val">${t.value}</div>
           <div class="kpi-bar" style="height:${Math.max(h,4)}%"></div>
-          <div class="kpi-bar-label">${t.date.slice(5)}</div>
-        </div>`;
+          <div class="kpi-bar-label">${t.date.slice(5)}</div></div>`;
       }).join('');
       return `<div class="kpi-chart-wrap">
         <div class="kpi-chart-title">${type}</div>
         <div class="kpi-chart-sub">Latest: <strong>${latest.value} ${latest.unit||''}</strong> (${latest.date}) · Best: <strong>${best.value} ${best.unit||''}</strong> (${best.date})</div>
-        <div class="kpi-sparkline">${bars}</div>
-      </div>`;
+        <div class="kpi-sparkline">${bars}</div></div>`;
     }).join('');
-  } catch(e) { container.textContent = 'Error loading KPIs: ' + e.message; }
+  } catch(e){container.textContent='Error: '+e.message;}
 }
 
 async function submitKPI() {
-  const type  = document.getElementById('kpi-type').value;
-  const value = document.getElementById('kpi-value').value;
-  const date  = document.getElementById('kpi-date').value;
-  const notes = document.getElementById('kpi-notes').value;
-  const status = document.getElementById('kpi-status');
-  if (!value || !date) { status.style.color='#c0392b'; status.textContent='Please enter a value and date.'; return; }
-  const units = {FTP:'watts','Pull-ups':'reps','Push-ups':'reps',Dips:'reps',Plank:'seconds',VO2max:'ml/kg/min',Other:''};
+  const type=document.getElementById('kpi-type').value;
+  const value=document.getElementById('kpi-value').value;
+  const date=document.getElementById('kpi-date').value;
+  const notes=document.getElementById('kpi-notes').value;
+  const status=document.getElementById('kpi-status');
+  if(!value||!date){status.style.color='#c0392b';status.textContent='Please enter a value and date.';return;}
+  const units={FTP:'watts','Pull-ups':'reps','Push-ups':'reps',Dips:'reps',Plank:'seconds',VO2max:'ml/kg/min',Other:''};
   try {
-    const r = await fetch('/api/performance_tests', { method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({test_type:type,value:parseFloat(value),unit:units[type]||'',date,notes}) });
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-    status.style.color='var(--green)'; status.textContent='Logged!';
-    document.getElementById('kpi-value').value = '';
-    document.getElementById('kpi-notes').value = '';
-    kpiLoaded = false; await refreshKPICharts(); kpiLoaded = true;
-    setTimeout(() => status.textContent='', 3000);
-  } catch(e) { status.style.color='#c0392b'; status.textContent='Error: '+e.message; }
+    const r=await fetch('/api/performance_tests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({test_type:type,value:parseFloat(value),unit:units[type]||'',date,notes})});
+    const d=await r.json();
+    if(d.error) throw new Error(d.error);
+    status.style.color='var(--green)';status.textContent='Logged!';
+    document.getElementById('kpi-value').value='';document.getElementById('kpi-notes').value='';
+    kpiLoaded=false;await refreshKPICharts();kpiLoaded=true;
+    setTimeout(()=>status.textContent='',3000);
+  } catch(e){status.style.color='#c0392b';status.textContent='Error: '+e.message;}
+}
+
+// ── Nutrition tab ─────────────────────────────────────────────
+async function loadNutrition() {
+  nutritionLoaded = true;
+  try {
+    const [nutrResp, goalsResp] = await Promise.all([
+      fetch('/api/dashboard').then(r=>r.json()),
+      fetch('/api/nutrition_goals').then(r=>r.json())
+    ]);
+    const nutrition=nutrResp.nutrition||[], goals=goalsResp;
+    const days=[];
+    for(let i=6;i>=0;i--){
+      const d=new Date(); d.setDate(d.getDate()-i);
+      const dateStr=d.toISOString().slice(0,10);
+      const label=dateLabel(dateStr);
+      const data=nutrition.find(n=>n.date===dateStr);
+      days.push({date:dateStr,label,isToday:i===0,data});
+    }
+    const goalCal=goals.calories||2200;
+    const COLORS={protein:'#4a7c59',carbs:'#4a6fa5',fat:'#7a4a8a'};
+    const wrap=document.getElementById('nutr-bar-chart-wrap');
+    const canvas=document.getElementById('nutr-bar-canvas');
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=wrap.offsetWidth*dpr;canvas.height=wrap.offsetHeight*dpr;
+    canvas.style.width=wrap.offsetWidth+'px';canvas.style.height=wrap.offsetHeight+'px';
+    const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+    const W=wrap.offsetWidth,H=wrap.offsetHeight,pad={top:20,right:55,bottom:30,left:10};
+    const cW=W-pad.left-pad.right,cH=H-pad.top-pad.bottom;
+    const barW=Math.floor(cW/days.length)-6,barGap=Math.floor(cW/days.length);
+    const maxGrams=Math.max(...days.map(d=>!d.data?0:(d.data.protein_g||0)+(d.data.carbs_g||0)+(d.data.fat_g||0)),100);
+    const maxCal=Math.max(...days.map(d=>d.data?(d.data.calories_kcal||0):0),goalCal*1.2);
+    const yCal=v=>pad.top+cH-(v/maxCal)*cH;
+    const xBar=i=>pad.left+i*barGap;
+    ctx.strokeStyle='#c8a96e';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    const goalY=yCal(goalCal);
+    ctx.beginPath();ctx.moveTo(pad.left,goalY);ctx.lineTo(W-pad.right,goalY);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#c8a96e';ctx.font='9px Georgia';ctx.textAlign='left';
+    ctx.fillText('Goal '+goalCal,W-pad.right+3,goalY+3);
+    days.forEach((day,i)=>{
+      const x=xBar(i);
+      if(!day.data){ctx.fillStyle='#1a1a1a';ctx.fillRect(x,pad.top,barW,cH);return;}
+      const pro=day.data.protein_g||0,carb=day.data.carbs_g||0,fat=day.data.fat_g||0;
+      let curY=pad.top+cH;
+      [[pro,COLORS.protein],[carb,COLORS.carbs],[fat,COLORS.fat]].forEach(([val,color])=>{
+        if(!val) return;
+        const h=(val/maxGrams)*cH; curY-=h;
+        ctx.fillStyle=color;ctx.fillRect(x,curY,barW,h);
+      });
+      if(day.isToday){ctx.strokeStyle='#c8a96e';ctx.lineWidth=1.5;ctx.strokeRect(x-1,pad.top,barW+2,cH);}
+    });
+    ctx.beginPath();ctx.strokeStyle='#e8e4d9';ctx.lineWidth=2;
+    let started=false;
+    days.forEach((day,i)=>{
+      if(!day.data||!day.data.calories_kcal) return;
+      const x=xBar(i)+barW/2,y=yCal(day.data.calories_kcal);
+      if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+    });ctx.stroke();
+    days.forEach((day,i)=>{
+      if(!day.data||!day.data.calories_kcal) return;
+      const x=xBar(i)+barW/2,y=yCal(day.data.calories_kcal);
+      ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle='#e8e4d9';ctx.fill();
+      ctx.fillStyle='#888';ctx.font='9px Georgia';ctx.textAlign='center';
+      ctx.fillText(Math.round(day.data.calories_kcal),x,y-7);
+    });
+    ctx.fillStyle='#555';ctx.font='10px Georgia';ctx.textAlign='center';
+    days.forEach((day,i)=>{ctx.fillStyle=day.isToday?'#c8a96e':'#555';ctx.fillText(day.label,xBar(i)+barW/2,H-6);});
+    ctx.fillStyle='#444';ctx.font='9px Georgia';ctx.textAlign='right';
+    [0,Math.round(maxCal*.5),Math.round(maxCal)].forEach(v=>ctx.fillText(v,W-2,yCal(v)+3));
+    document.getElementById('nutr-legend').innerHTML=[
+      {color:COLORS.protein,label:'Protein (g)'},{color:COLORS.carbs,label:'Carbs (g)'},
+      {color:COLORS.fat,label:'Fat (g)'},{color:'#e8e4d9',label:'Calories →'},{color:'#c8a96e',label:'Cal goal'},
+    ].map(l=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:12px;height:3px;background:${l.color};border-radius:1px;flex-shrink:0"></div>${l.label}</div>`).join('');
+    if(goals.rationale) document.getElementById('nutr-rationale').textContent=goals.rationale;
+    const logged=nutrition.filter(n=>n.calories_kcal);
+    const avg=k=>logged.length?Math.round(logged.reduce((s,n)=>s+(n[k]||0),0)/logged.length):0;
+    const avgCal=avg('calories_kcal'),avgPro=avg('protein_g'),avgCarb=avg('carbs_g'),avgFat=avg('fat_g');
+    const macros=[
+      {label:'Calories',actual:avgCal,goal:goals.calories||2200,color:'#c8a96e',unit:'kcal'},
+      {label:'Protein',actual:avgPro,goal:goals.protein_g||185,color:COLORS.protein,unit:'g'},
+      {label:'Carbs',actual:avgCarb,goal:goals.carbs_g||175,color:COLORS.carbs,unit:'g'},
+      {label:'Fat',actual:avgFat,goal:goals.fat_g||65,color:COLORS.fat,unit:'g'},
+    ];
+    const maxVal=Math.max(...macros.map(m=>Math.max(m.actual,m.goal)),1);
+    document.getElementById('nutr-goal-bars').innerHTML=macros.map(m=>{
+      const actPct=Math.round(m.actual/maxVal*100),goalPct=Math.round(m.goal/maxVal*100);
+      const onTarget=m.actual>=m.goal*.9&&m.actual<=m.goal*1.1,over=m.actual>m.goal*1.15;
+      const status=onTarget?'✓':over?'↑':m.actual>=m.goal*.8?'~':'';
+      const statusColor=onTarget?'var(--green)':over?'#c07040':'var(--dim)';
+      return `<div class="nutr-row"><div class="nutr-label">${m.label}</div>
+        <div class="nutr-goal-bar-wrap"><div class="nutr-goal-bar-actual" style="width:${actPct}%;background:${m.color}"></div><div class="nutr-goal-line" style="left:${goalPct}%"></div></div>
+        <div class="nutr-nums"><div class="nutr-actual">${m.actual}${m.unit}</div><div class="nutr-goal-val">/ ${m.goal}${m.unit}</div></div>
+        <div class="nutr-status" style="color:${statusColor}">${status}</div></div>`;
+    }).join('');
+    const pieCanvas=document.getElementById('nutr-pie-canvas'),pc=pieCanvas.getContext('2d');
+    const pieData=[{label:'Protein',value:avgPro*4,color:COLORS.protein},{label:'Carbs',value:avgCarb*4,color:COLORS.carbs},{label:'Fat',value:avgFat*9,color:COLORS.fat}];
+    const totalKcal=pieData.reduce((s,d)=>s+d.value,0);
+    if(totalKcal>0){
+      const cx=90,cy=90,r=80;let startAngle=-Math.PI/2;
+      pieData.forEach(slice=>{
+        const angle=(slice.value/totalKcal)*Math.PI*2;
+        pc.beginPath();pc.moveTo(cx,cy);pc.arc(cx,cy,r,startAngle,startAngle+angle);pc.closePath();
+        pc.fillStyle=slice.color;pc.fill();pc.strokeStyle='#0d0d0d';pc.lineWidth=2;pc.stroke();
+        const midAngle=startAngle+angle/2,lx=cx+Math.cos(midAngle)*r*.65,ly=cy+Math.sin(midAngle)*r*.65;
+        const pct=Math.round(slice.value/totalKcal*100);
+        if(pct>5){pc.fillStyle='#fff';pc.font='bold 11px Georgia';pc.textAlign='center';pc.fillText(pct+'%',lx,ly+4);}
+        startAngle+=angle;
+      });
+      pc.beginPath();pc.arc(cx,cy,r*.45,0,Math.PI*2);pc.fillStyle='#0d0d0d';pc.fill();
+      pc.fillStyle='#888';pc.font='10px Georgia';pc.textAlign='center';pc.fillText('avg',cx,cy-4);
+      pc.fillStyle='#e8e4d9';pc.font='bold 13px Georgia';pc.fillText(Math.round(avgCal),cx,cy+12);
+      pc.fillStyle='#555';pc.font='9px Georgia';pc.fillText('kcal',cx,cy+24);
+    }
+    document.getElementById('nutr-pie-legend').innerHTML=pieData.map(d=>{
+      const pct=totalKcal?Math.round(d.value/totalKcal*100):0;
+      return `<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-bottom:4px;"><div style="width:10px;height:10px;border-radius:2px;background:${d.color};flex-shrink:0"></div>${d.label} ${pct}%</div>`;
+    }).join('');
+  } catch(e){document.getElementById('nutr-bar-chart-wrap').textContent='Error: '+e.message;}
 }
 
 // ── Report ────────────────────────────────────────────────────
 async function generateReport() {
-  const btn = document.getElementById('generate-report');
-  const out  = document.getElementById('report-text');
-  btn.disabled = true; btn.textContent = 'Generating...'; out.textContent = '';
-  setLoading(true);
+  const btn=document.getElementById('generate-report'),out=document.getElementById('report-text');
+  btn.disabled=true;btn.textContent='Generating...';out.textContent='';setLoading(true);
   try {
-    const r = await fetch('/api/weekly_report');
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-    out.textContent = d.report;
-  } catch(e) { out.textContent = 'Error: '+e.message; }
-  btn.disabled = false; btn.textContent = "Generate This Week's Report"; setLoading(false);
+    const r=await fetch('/api/weekly_report');
+    const d=await r.json();
+    if(d.error) throw new Error(d.error);
+    out.textContent=d.report;
+  } catch(e){out.textContent='Error: '+e.message;}
+  btn.disabled=false;btn.textContent="Generate This Week's Report";setLoading(false);
 }
 
 // ── Goals ─────────────────────────────────────────────────────
 async function loadGoals() {
+  goalsLoaded = true;
   try {
-    const r = await fetch('/api/phases');
-    const phases = await r.json();
-    document.getElementById('phases-list').innerHTML = phases.map(p => `
+    const r=await fetch('/api/phases');
+    const phases=await r.json();
+    document.getElementById('phases-list').innerHTML=phases.map(p=>`
       <div class="phase-card ${p.is_current?'current':''}">
         <div class="pc-badge ${p.is_current?'':'upcoming'}">${p.is_current?'Current Phase':'Upcoming'}</div>
         <div class="pc-name">${p.name}</div>
         <div class="pc-goal">${p.goal}</div>
-        <div class="pc-dates">${p.start} → ${p.end} ${p.is_current&&p.days_remaining>0?`· ${p.days_remaining} days remaining`:''}</div>
+        <div class="pc-dates">${p.start} → ${p.end}${p.is_current&&p.days_remaining>0?` · ${p.days_remaining} days remaining`:''}</div>
       </div>`).join('');
-  } catch(e) { document.getElementById('phases-list').textContent = 'Error loading phases.'; }
+  } catch(e){document.getElementById('phases-list').textContent='Error loading phases.';}
 }
 
 // ── Workout modal ─────────────────────────────────────────────
 async function openDayWorkouts(dateStr, workouts) {
-  if (!workouts || !workouts.length) return;
-  if (workouts.length === 1 && workouts[0].activity_id) { openWorkout(workouts[0].activity_id, workouts[0].name); return; }
-  const modal = document.getElementById('workout-modal');
-  const d = new Date(dateStr);
-  document.getElementById('modal-title').textContent = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  document.getElementById('modal-meta').textContent = workouts.length + ' workouts';
-  document.getElementById('modal-stats').innerHTML = '';
-  document.getElementById('modal-zones').innerHTML = renderWorkoutRows(workouts);
-  document.getElementById('modal-pace-chart').innerHTML = '';
-  document.getElementById('modal-elev-chart').innerHTML = '';
-  modal.classList.add('open'); document.body.style.overflow = 'hidden';
+  if(!workouts||!workouts.length) return;
+  if(workouts.length===1&&workouts[0].activity_id){openWorkout(workouts[0].activity_id,workouts[0].name);return;}
+  const modal=document.getElementById('workout-modal');
+  document.getElementById('modal-title').textContent=dateLabel(dateStr);
+  document.getElementById('modal-meta').textContent=workouts.length+' workouts';
+  document.getElementById('modal-stats').innerHTML='';
+  document.getElementById('modal-zones').innerHTML=renderWorkoutRows(workouts);
+  document.getElementById('modal-pace-chart').innerHTML='';
+  document.getElementById('modal-elev-chart').innerHTML='';
+  modal.classList.add('open');document.body.style.overflow='hidden';
 }
 
 async function openWorkout(activityId, name) {
-  const modal = document.getElementById('workout-modal');
-  document.getElementById('modal-title').textContent = name || 'Workout';
-  document.getElementById('modal-meta').textContent = 'Loading...';
-  document.getElementById('modal-stats').innerHTML = '';
-  document.getElementById('modal-zones').innerHTML = '';
-  document.getElementById('modal-pace-chart').innerHTML = '';
-  document.getElementById('modal-elev-chart').innerHTML = '';
-  modal.classList.add('open'); document.body.style.overflow = 'hidden';
+  const modal=document.getElementById('workout-modal');
+  document.getElementById('modal-title').textContent=name||'Workout';
+  document.getElementById('modal-meta').textContent='Loading...';
+  document.getElementById('modal-stats').innerHTML='';
+  document.getElementById('modal-zones').innerHTML='';
+  document.getElementById('modal-pace-chart').innerHTML='';
+  document.getElementById('modal-elev-chart').innerHTML='';
+  modal.classList.add('open');document.body.style.overflow='hidden';
   try {
-    const r = await fetch('/api/workout/'+activityId);
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-    const act=d.activity, zones=d.zones, splits=d.splits||[], apple=d.apple;
-    document.getElementById('modal-meta').textContent = [act.date, act.sport_type, act.distance_miles?act.distance_miles.toFixed(2)+' mi':'', act.moving_time_min?Math.round(act.moving_time_min)+' min':''].filter(Boolean).join('  ·  ');
+    const r=await fetch('/api/workout/'+activityId);
+    const d=await r.json();
+    if(d.error) throw new Error(d.error);
+    const act=d.activity,zones=d.zones,splits=d.splits||[],apple=d.apple;
+    document.getElementById('modal-meta').textContent=[act.date,act.sport_type,act.distance_miles?act.distance_miles.toFixed(2)+' mi':'',act.moving_time_min?Math.round(act.moving_time_min)+' min':''].filter(Boolean).join('  ·  ');
     const stats=[];
     if(act.distance_miles) stats.push({label:'Distance',value:act.distance_miles.toFixed(2),unit:'mi'});
     if(act.moving_time_min) stats.push({label:'Duration',value:Math.round(act.moving_time_min),unit:'min'});
@@ -1003,9 +1041,9 @@ async function openWorkout(activityId, name) {
     if(act.max_hr) stats.push({label:'Max HR',value:Math.round(act.max_hr),unit:'bpm'});
     if(act.total_elevation_gain_m) stats.push({label:'Elevation',value:Math.round(act.total_elevation_gain_m*3.28),unit:'ft'});
     if(act.calories) stats.push({label:'Calories',value:Math.round(act.calories),unit:'kcal'});
-    document.getElementById('modal-stats').innerHTML = stats.map(s=>`<div class="modal-stat"><div class="label">${s.label}</div><div class="value">${s.value}<span class="unit">${s.unit}</span></div></div>`).join('');
-    const zoneData = zones||(apple?{z1_min:apple.z1_min,z2_min:apple.z2_min,z3_min:apple.z3_min,z4_min:apple.z4_min,z5_min:apple.z5_min}:null);
-    if(zoneData) {
+    document.getElementById('modal-stats').innerHTML=stats.map(s=>`<div class="modal-stat"><div class="label">${s.label}</div><div class="value">${s.value}<span class="unit">${s.unit}</span></div></div>`).join('');
+    const zoneData=zones||(apple?{z1_min:apple.z1_min,z2_min:apple.z2_min,z3_min:apple.z3_min,z4_min:apple.z4_min,z5_min:apple.z5_min}:null);
+    if(zoneData){
       const zDefs=[{key:'z1_min',label:'Z1',color:'#555'},{key:'z2_min',label:'Z2',color:'#4a7c59'},{key:'z3_min',label:'Z3',color:'#c8a96e'},{key:'z4_min',label:'Z4',color:'#c07040'},{key:'z5_min',label:'Z5',color:'#a03030'}];
       const maxZ=Math.max(...zDefs.map(z=>zoneData[z.key]||0),1);
       document.getElementById('modal-zones').innerHTML='<div class="modal-section-title">Heart Rate Zones</div>'+zDefs.map(z=>{const val=zoneData[z.key]||0;const pct=Math.round(val/maxZ*100);return`<div class="mzone-row"><div class="mzone-label">${z.label}</div><div class="mzone-bar-wrap"><div class="mzone-bar" style="width:${pct}%;background:${z.color}"></div></div><div class="mzone-val">${Math.round(val)}m</div></div>`;}).join('');
@@ -1014,19 +1052,19 @@ async function openWorkout(activityId, name) {
       const maxPace=Math.max(...splits.map(s=>s.split_pace_min_mi||0));
       const minPace=Math.min(...splits.map(s=>s.split_pace_min_mi||999));
       const paceRange=maxPace-minPace||1;
-      document.getElementById('modal-pace-chart').innerHTML='<div class="modal-section-title">Pace Per Mile (lower = faster)</div><div class="mini-chart">'+splits.map(s=>{const pace=s.split_pace_min_mi||0;const mins=Math.floor(pace);const secs=Math.round((pace-mins)*60);const label=`${mins}:${String(secs).padStart(2,'0')}`;const hp=pace>0?Math.round((1-(pace-minPace)/(paceRange+0.5))*100):10;const hr=s.avg_hr_bpm?` · ${Math.round(s.avg_hr_bpm)}bpm`:'';return`<div class="mini-bar-wrap" title="Mile ${s.mile}: ${label}/mi${hr}"><div class="mini-bar" style="height:${Math.max(hp,5)}%;background:#4a7c59;width:100%"></div><div class="mini-label">M${s.mile}</div></div>`;}).join('')+'</div>';
+      document.getElementById('modal-pace-chart').innerHTML='<div class="modal-section-title">Pace Per Mile</div><div class="mini-chart">'+splits.map(s=>{const pace=s.split_pace_min_mi||0;const mins=Math.floor(pace);const secs=Math.round((pace-mins)*60);const label=`${mins}:${String(secs).padStart(2,'0')}`;const hp=pace>0?Math.round((1-(pace-minPace)/(paceRange+0.5))*100):10;const hr=s.avg_hr_bpm?` · ${Math.round(s.avg_hr_bpm)}bpm`:'';return`<div class="mini-bar-wrap" title="Mile ${s.mile}: ${label}/mi${hr}"><div class="mini-bar" style="height:${Math.max(hp,5)}%;background:#4a7c59;width:100%"></div><div class="mini-label">M${s.mile}</div></div>`;}).join('')+'</div>';
       const maxElev=Math.max(...splits.map(s=>s.elev_gain_ft||0),1);
-      document.getElementById('modal-elev-chart').innerHTML='<div class="modal-section-title">Elevation Gain Per Mile</div><div class="mini-chart">'+splits.map(s=>{const gain=s.elev_gain_ft||0;const hp=Math.round(gain/maxElev*100);return`<div class="mini-bar-wrap" title="Mile ${s.mile}: +${Math.round(gain)}ft"><div class="mini-bar" style="height:${Math.max(hp,2)}%;background:#c8a96e;width:100%"></div><div class="mini-label">M${s.mile}</div></div>`;}).join('')+'</div>';
+      document.getElementById('modal-elev-chart').innerHTML='<div class="modal-section-title">Elevation Per Mile</div><div class="mini-chart">'+splits.map(s=>{const gain=s.elev_gain_ft||0;const hp=Math.round(gain/maxElev*100);return`<div class="mini-bar-wrap" title="Mile ${s.mile}: +${Math.round(gain)}ft"><div class="mini-bar" style="height:${Math.max(hp,2)}%;background:#c8a96e;width:100%"></div><div class="mini-label">M${s.mile}</div></div>`;}).join('')+'</div>';
     }
-  } catch(e) { document.getElementById('modal-meta').textContent='Error: '+e.message; }
+  } catch(e){document.getElementById('modal-meta').textContent='Error: '+e.message;}
 }
 
-function closeWorkoutModal() { document.getElementById('workout-modal').classList.remove('open'); document.body.style.overflow=''; }
-function closeModal(e) { if(e.target===document.getElementById('workout-modal')) closeWorkoutModal(); }
-document.addEventListener('keydown', e => { if(e.key==='Escape'){closeWorkoutModal();closeBodyCompModal();} });
+function closeWorkoutModal(){document.getElementById('workout-modal').classList.remove('open');document.body.style.overflow='';}
+function closeModal(e){if(e.target===document.getElementById('workout-modal'))closeWorkoutModal();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeWorkoutModal();closeBodyCompModal();}});
 
 function renderWorkoutRows(workouts) {
-  if (!workouts||!workouts.length) return '<div style="color:var(--dim);font-size:12px">No workouts</div>';
+  if(!workouts||!workouts.length) return '<div style="color:var(--dim);font-size:12px">No workouts</div>';
   const icons={Run:'🏃',Ride:'🚴',GravelRide:'🚴',VirtualRide:'🚴',Workout:'💪',Strength:'💪',Cardio:'🏋️',Walk:'🚶',Hike:'🥾'};
   const colors={Run:'#4a7c59',Ride:'#c8a96e',GravelRide:'#c8a96e',VirtualRide:'#c8a96e',Workout:'#4a6fa5',Strength:'#4a6fa5',Cardio:'#7a4a8a',Walk:'#666',Hike:'#666'};
   return workouts.filter(w=>w.activity_id).map(w=>{
@@ -1037,1395 +1075,18 @@ function renderWorkoutRows(workouts) {
     const meta=[dist,dur,hr].filter(Boolean).join(' · ');
     return`<div class="workout-row" onclick="openWorkout(${w.activity_id},'${(w.name||'').replace(/'/g,"&apos;")}')">
       <div class="wr-icon" style="background:${color}22;color:${color}">${icon}</div>
-      <div><div class="wr-name">${w.name||w.sport_type}</div><div class="wr-meta">${w.date}  ·  ${meta}</div></div>
-      <div class="wr-arrow">›</div>
-    </div>`;
+      <div><div class="wr-name">${w.name||w.sport_type}</div><div class="wr-meta">${w.date} · ${meta}</div></div>
+      <div class="wr-arrow">›</div></div>`;
   }).join('');
 }
 
-
-// ── Nutrition tab ─────────────────────────────────────────────
-let nutritionLoaded = false;
-async function loadNutrition() {
-  if (nutritionLoaded) return;
-  nutritionLoaded = true;
-  try {
-    const [nutrResp, goalsResp] = await Promise.all([
-      fetch('/api/dashboard').then(r => r.json()),
-      fetch('/api/nutrition_goals').then(r => r.json())
-    ]);
-
-    const nutrition = nutrResp.nutrition || [];
-    const goals     = goalsResp;
-
-    // Build 7-day array
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().slice(0, 10);
-      const [y,mo,da] = dateStr.split('-');
-      const label = new Date(+y, mo-1, +da).toLocaleDateString('en-US', {weekday:'short'});
-      const data = nutrition.find(n => n.date === dateStr);
-      days.push({ date: dateStr, label, isToday: i === 0, data });
-    }
-
-    const goalCal = goals.calories || 2200;
-    const COLORS = { protein:'#4a7c59', carbs:'#4a6fa5', fat:'#7a4a8a' };
-
-    // ── Stacked bar + calorie line chart ──────────────────────
-    const wrap   = document.getElementById('nutr-bar-chart-wrap');
-    const canvas = document.getElementById('nutr-bar-canvas');
-    const dpr    = window.devicePixelRatio || 1;
-    canvas.width  = wrap.offsetWidth * dpr;
-    canvas.height = wrap.offsetHeight * dpr;
-    canvas.style.width  = wrap.offsetWidth + 'px';
-    canvas.style.height = wrap.offsetHeight + 'px';
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-
-    const W = wrap.offsetWidth, H = wrap.offsetHeight;
-    const pad = { top:20, right:55, bottom:30, left:10 };
-    const cW = W - pad.left - pad.right;
-    const cH = H - pad.top - pad.bottom;
-    const barW = Math.floor(cW / days.length) - 6;
-    const barGap = Math.floor(cW / days.length);
-
-    // Scale for stacked macros (in grams, left axis implied)
-    const maxGrams = Math.max(...days.map(d => {
-      if (!d.data) return 0;
-      return (d.data.protein_g||0)+(d.data.carbs_g||0)+(d.data.fat_g||0);
-    }), 100);
-
-    // Scale for calories (right axis)
-    const maxCal = Math.max(...days.map(d => d.data ? (d.data.calories_kcal||0) : 0), goalCal * 1.2);
-
-    const yGrams = v => pad.top + cH - (v / maxGrams) * cH;
-    const yCal   = v => pad.top + cH - (v / maxCal) * cH;
-    const xBar   = i => pad.left + i * barGap;
-
-    // Goal calorie line
-    ctx.strokeStyle = '#c8a96e'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
-    const goalY = yCal(goalCal);
-    ctx.beginPath(); ctx.moveTo(pad.left, goalY); ctx.lineTo(W - pad.right, goalY); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#c8a96e'; ctx.font = '9px Georgia'; ctx.textAlign = 'left';
-    ctx.fillText('Goal ' + goalCal, W - pad.right + 3, goalY + 3);
-
-    // Stacked bars
-    days.forEach((day, i) => {
-      const x = xBar(i);
-      if (!day.data) {
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(x, pad.top, barW, cH);
-        return;
-      }
-      const pro  = day.data.protein_g  || 0;
-      const carb = day.data.carbs_g    || 0;
-      const fat  = day.data.fat_g      || 0;
-      const total = pro + carb + fat;
-      let curY = pad.top + cH;
-      [[pro, COLORS.protein],[carb, COLORS.carbs],[fat, COLORS.fat]].forEach(([val, color]) => {
-        if (!val) return;
-        const h = (val / maxGrams) * cH;
-        curY -= h;
-        ctx.fillStyle = color;
-        ctx.fillRect(x, curY, barW, h);
-      });
-      // Today highlight
-      if (day.isToday) {
-        ctx.strokeStyle = '#c8a96e'; ctx.lineWidth = 1.5;
-        ctx.strokeRect(x - 1, pad.top, barW + 2, cH);
-      }
-    });
-
-    // Calorie line
-    ctx.beginPath(); ctx.strokeStyle = '#e8e4d9'; ctx.lineWidth = 2;
-    let started = false;
-    days.forEach((day, i) => {
-      if (!day.data || !day.data.calories_kcal) return;
-      const x = xBar(i) + barW / 2;
-      const y = yCal(day.data.calories_kcal);
-      if (!started) { ctx.moveTo(x, y); started = true; }
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-    // Dots on calorie line
-    days.forEach((day, i) => {
-      if (!day.data || !day.data.calories_kcal) return;
-      const x = xBar(i) + barW / 2;
-      const y = yCal(day.data.calories_kcal);
-      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2);
-      ctx.fillStyle = '#e8e4d9'; ctx.fill();
-      // Calorie label
-      ctx.fillStyle = '#888'; ctx.font = '9px Georgia'; ctx.textAlign = 'center';
-      ctx.fillText(Math.round(day.data.calories_kcal), x, y - 7);
-    });
-
-    // X axis day labels
-    ctx.fillStyle = '#555'; ctx.font = '10px Georgia'; ctx.textAlign = 'center';
-    days.forEach((day, i) => {
-      ctx.fillStyle = day.isToday ? '#c8a96e' : '#555';
-      ctx.fillText(day.label, xBar(i) + barW/2, H - 6);
-    });
-
-    // Right axis calorie labels
-    ctx.fillStyle = '#444'; ctx.font = '9px Georgia'; ctx.textAlign = 'right';
-    [0, Math.round(maxCal * 0.5), Math.round(maxCal)].forEach(v => {
-      ctx.fillText(v, W - 2, yCal(v) + 3);
-    });
-
-    // Legend
-    document.getElementById('nutr-legend').innerHTML = [
-      { color: COLORS.protein, label: 'Protein (g)' },
-      { color: COLORS.carbs,   label: 'Carbs (g)' },
-      { color: COLORS.fat,     label: 'Fat (g)' },
-      { color: '#e8e4d9',      label: 'Calories (kcal) →' },
-      { color: '#c8a96e',      label: 'Calorie goal' },
-    ].map(l => `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
-      <div style="width:12px;height:3px;background:${l.color};border-radius:1px;flex-shrink:0"></div>${l.label}
-    </div>`).join('');
-
-    if (goals.rationale) {
-      document.getElementById('nutr-rationale').textContent = goals.rationale;
-    }
-
-    // ── 7-day avg vs goal bars ────────────────────────────────
-    const logged = nutrition.filter(n => n.calories_kcal);
-    const avg = k => logged.length ? Math.round(logged.reduce((s,n) => s+(n[k]||0),0)/logged.length) : 0;
-    const avgCal  = avg('calories_kcal');
-    const avgPro  = avg('protein_g');
-    const avgCarb = avg('carbs_g');
-    const avgFat  = avg('fat_g');
-
-    const macros = [
-      { label:'Calories', actual:avgCal,  goal:goals.calories||2200,  color:'#c8a96e', unit:'kcal' },
-      { label:'Protein',  actual:avgPro,  goal:goals.protein_g||185,  color:COLORS.protein, unit:'g' },
-      { label:'Carbs',    actual:avgCarb, goal:goals.carbs_g||175,    color:COLORS.carbs,   unit:'g' },
-      { label:'Fat',      actual:avgFat,  goal:goals.fat_g||65,       color:COLORS.fat,     unit:'g' },
-    ];
-    const maxVal = Math.max(...macros.map(m => Math.max(m.actual, m.goal)), 1);
-
-    document.getElementById('nutr-goal-bars').innerHTML = macros.map(m => {
-      const actPct  = Math.round(m.actual / maxVal * 100);
-      const goalPct = Math.round(m.goal   / maxVal * 100);
-      const onTarget = m.actual >= m.goal * 0.9 && m.actual <= m.goal * 1.1;
-      const over     = m.actual > m.goal * 1.15;
-      const status   = onTarget ? '✓' : over ? '↑' : m.actual >= m.goal * 0.8 ? '~' : '';
-      const statusColor = onTarget ? 'var(--green)' : over ? '#c07040' : 'var(--dim)';
-      return `<div class="nutr-row">
-        <div class="nutr-label">${m.label}</div>
-        <div class="nutr-goal-bar-wrap">
-          <div class="nutr-goal-bar-actual" style="width:${actPct}%;background:${m.color}"></div>
-          <div class="nutr-goal-line" style="left:${goalPct}%"></div>
-        </div>
-        <div class="nutr-nums">
-          <div class="nutr-actual">${m.actual}${m.unit}</div>
-          <div class="nutr-goal-val">/ ${m.goal}${m.unit}</div>
-        </div>
-        <div class="nutr-status" style="color:${statusColor}">${status}</div>
-      </div>`;
-    }).join('');
-
-    // ── Pie chart ─────────────────────────────────────────────
-    const pieCanvas = document.getElementById('nutr-pie-canvas');
-    const pc = pieCanvas.getContext('2d');
-    const pieData = [
-      { label:'Protein',  value: avgPro  * 4, color: COLORS.protein }, // 4 kcal/g
-      { label:'Carbs',    value: avgCarb * 4, color: COLORS.carbs   }, // 4 kcal/g
-      { label:'Fat',      value: avgFat  * 9, color: COLORS.fat     }, // 9 kcal/g
-    ];
-    const totalKcal = pieData.reduce((s,d) => s + d.value, 0);
-    if (totalKcal > 0) {
-      const cx = 90, cy = 90, r = 80;
-      let startAngle = -Math.PI / 2;
-      pieData.forEach(slice => {
-        const angle = (slice.value / totalKcal) * Math.PI * 2;
-        pc.beginPath();
-        pc.moveTo(cx, cy);
-        pc.arc(cx, cy, r, startAngle, startAngle + angle);
-        pc.closePath();
-        pc.fillStyle = slice.color;
-        pc.fill();
-        pc.strokeStyle = '#0d0d0d'; pc.lineWidth = 2;
-        pc.stroke();
-        // Percentage label
-        const midAngle = startAngle + angle / 2;
-        const lx = cx + Math.cos(midAngle) * r * 0.65;
-        const ly = cy + Math.sin(midAngle) * r * 0.65;
-        const pct = Math.round(slice.value / totalKcal * 100);
-        if (pct > 5) {
-          pc.fillStyle = '#fff'; pc.font = 'bold 11px Georgia'; pc.textAlign = 'center';
-          pc.fillText(pct + '%', lx, ly + 4);
-        }
-        startAngle += angle;
-      });
-      // Center hole
-      pc.beginPath(); pc.arc(cx, cy, r * 0.45, 0, Math.PI*2);
-      pc.fillStyle = '#0d0d0d'; pc.fill();
-      // Center label
-      pc.fillStyle = '#888'; pc.font = '10px Georgia'; pc.textAlign = 'center';
-      pc.fillText('avg', cx, cy - 4);
-      pc.fillStyle = '#e8e4d9'; pc.font = 'bold 13px Georgia';
-      pc.fillText(Math.round(avgCal), cx, cy + 12);
-      pc.fillStyle = '#555'; pc.font = '9px Georgia';
-      pc.fillText('kcal', cx, cy + 24);
-    }
-
-    document.getElementById('nutr-pie-legend').innerHTML = pieData.map(d => {
-      const pct = totalKcal ? Math.round(d.value / totalKcal * 100) : 0;
-      return `<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-bottom:4px;">
-        <div style="width:10px;height:10px;border-radius:2px;background:${d.color};flex-shrink:0"></div>
-        ${d.label} ${pct}%
-      </div>`;
-    }).join('');
-
-  } catch(e) {
-    document.getElementById('nutr-bar-chart-wrap').textContent = 'Error: ' + e.message;
-  }
-}
-
-// Auto-load dashboard
-setTimeout(loadDashboard, 500);
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Performance Coach</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --gold: #c8a96e; --green: #4a7c59; --blue: #4a6fa5; --purple: #7a4a8a;
-  --bg: #0a0a0a; --bg2: #0d0d0d; --bg3: #111;
-  --border: #1e1e1e; --text: #e8e4d9; --muted: #888; --dim: #444;
-}
-body { background:var(--bg); color:var(--text); font-family:Georgia,'Times New Roman',serif; min-height:100vh; display:flex; flex-direction:column; }
-#header { background:var(--bg2); border-bottom:1px solid var(--border); padding:0 20px; display:flex; align-items:center; height:52px; flex-shrink:0; }
-#header .brand { font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); }
-#header .sep { color:var(--border); margin:0 14px; font-size:18px; }
-nav { display:flex; gap:2px; }
-nav button { background:transparent; border:none; color:var(--dim); font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-family:Georgia,serif; padding:6px 12px; cursor:pointer; border-radius:3px; transition:all .15s; }
-nav button:hover { color:var(--text); }
-nav button.active { color:var(--gold); background:#1a1500; }
-#header .spacer { flex:1; }
-#header .dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 5px var(--green); transition:all .3s; }
-#header .dot.loading { background:var(--gold); box-shadow:0 0 5px var(--gold); }
-#header .logout { background:transparent; border:none; color:var(--dim); font-size:11px; font-family:Georgia,serif; cursor:pointer; margin-left:16px; transition:color .15s; }
-#header .logout:hover { color:var(--text); }
-#main { flex:1; display:flex; overflow:hidden; }
-.tab { display:none; flex:1; overflow:hidden; flex-direction:column; }
-.tab.active { display:flex; }
-
-/* Chat */
-#chat-messages { flex:1; overflow-y:auto; padding:24px 20px; display:flex; flex-direction:column; gap:20px; max-width:760px; width:100%; margin:0 auto; }
-.msg-user { display:flex; gap:10px; align-items:flex-start; }
-.msg-user .dot2 { width:6px; height:6px; border-radius:50%; background:var(--gold); margin-top:7px; flex-shrink:0; }
-.msg-user .text { font-size:14px; line-height:1.55; }
-.msg-coach { padding-left:16px; border-left:1px solid var(--border); }
-.msg-coach .label { font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--green); margin-bottom:8px; }
-.msg-coach .text { font-size:13px; color:#bbb; line-height:1.85; white-space:pre-wrap; }
-.msg-coach .qtags { margin-top:8px; display:flex; flex-wrap:wrap; gap:4px; }
-.qtag { font-size:10px; color:var(--dim); background:var(--bg3); border:1px solid var(--border); padding:2px 8px; border-radius:2px; font-family:monospace; }
-.status-line { padding-left:16px; border-left:1px solid var(--border); }
-.status-line .label { font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--green); margin-bottom:6px; }
-.status-line .text { font-size:12px; color:var(--dim); font-style:italic; }
-#suggestions { padding:0 20px 16px; max-width:760px; width:100%; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-.sug { background:transparent; border:1px solid var(--border); color:var(--muted); padding:10px 12px; text-align:left; cursor:pointer; font-size:12px; font-family:Georgia,serif; line-height:1.4; border-radius:2px; transition:all .15s; }
-.sug:hover { border-color:var(--gold); color:var(--text); }
-#chat-empty { padding:28px 20px 12px; max-width:760px; width:100%; margin:0 auto; }
-#chat-empty h2 { font-size:22px; font-weight:normal; margin-bottom:6px; }
-#chat-empty p { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:20px; }
-#chat-input { border-top:1px solid var(--border); padding:12px 20px 16px; background:var(--bg2); max-width:760px; width:100%; margin:0 auto; }
-#input-row { display:flex; gap:8px; align-items:flex-end; }
-#inp { flex:1; background:transparent; border:none; border-bottom:1px solid #2a2a2a; color:var(--text); font-size:13px; font-family:Georgia,serif; padding:7px 0; resize:none; outline:none; line-height:1.5; }
-#inp::placeholder { color:var(--dim); }
-#sendbtn { background:transparent; border:1px solid var(--gold); color:var(--gold); padding:6px 14px; cursor:pointer; font-size:11px; letter-spacing:.15em; text-transform:uppercase; font-family:Georgia,serif; transition:all .15s; }
-#sendbtn:hover:not(:disabled) { background:var(--gold); color:var(--bg); }
-#sendbtn:disabled { opacity:.25; cursor:default; }
-#hint { font-size:10px; color:#252525; margin-top:6px; }
-
-/* Dashboard */
-#dashboard-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:900px; width:100%; margin:0 auto; }
-.section-title { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); margin-bottom:12px; margin-top:28px; }
-.section-title:first-child { margin-top:0; }
-.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:4px; }
-.card { background:var(--bg2); border:1px solid var(--border); border-radius:4px; padding:14px 16px; }
-.card.clickable { cursor:pointer; transition:border-color .15s; }
-.card.clickable:hover { border-color:var(--gold); }
-.card .label { font-size:10px; color:var(--dim); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
-.card .value { font-size:20px; font-weight:normal; line-height:1; }
-.card .unit { font-size:11px; color:var(--muted); margin-left:3px; }
-.card .sub { font-size:11px; color:var(--muted); margin-top:4px; }
-.card.highlight { border-color:var(--gold); }
-.card.warn { border-color:#8a3a2a; }
-.card.good { border-color:var(--green); }
-#phase-banner { border:1px solid var(--border); border-radius:4px; padding:16px 18px; margin-bottom:24px; background:var(--bg2); }
-#phase-banner .phase-label { font-size:10px; letter-spacing:.15em; text-transform:uppercase; margin-bottom:4px; }
-#phase-banner .phase-name { font-size:16px; margin-bottom:6px; }
-#phase-banner .phase-goal { font-size:12px; color:var(--muted); line-height:1.6; }
-#phase-banner .phase-days { font-size:11px; color:var(--dim); margin-top:8px; }
-#nutrition-alert { border:1px solid #5a3a1a; background:#1a1000; border-radius:4px; padding:12px 16px; margin-bottom:16px; font-size:12px; color:var(--gold); line-height:1.6; display:none; }
-#week-chart { margin-top:8px; }
-.day-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-.day-label { font-size:11px; color:var(--dim); width:32px; flex-shrink:0; }
-.bar-group { flex:1; display:flex; gap:2px; align-items:center; height:14px; }
-.bar { height:100%; border-radius:1px; transition:width .3s; min-width:0; }
-.bar.run { background:var(--green); }
-.bar.ride { background:var(--gold); }
-.bar.strength { background:var(--blue); }
-.bar.cardio { background:var(--purple); }
-.bar.walk { background:#666; }
-.day-total { font-size:10px; color:var(--dim); width:36px; text-align:right; flex-shrink:0; }
-.hover-day:hover { background:var(--bg3); border-radius:3px; }
-.hover-day { transition:background .12s; margin:0 -6px; padding:2px 6px; }
-#zone-chart { margin-top:8px; }
-.zone-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-.zone-label { font-size:11px; color:var(--dim); width:24px; flex-shrink:0; font-weight:500; }
-.zone-bar-wrap { flex:1; position:relative; height:18px; background:var(--bg3); border-radius:2px; overflow:visible; }
-.zone-bar-actual { height:100%; border-radius:2px; transition:width .5s; }
-.zone-goal-line { position:absolute; top:-3px; bottom:-3px; width:2px; border-radius:1px; background:#fff; opacity:.4; }
-.zone-nums { display:flex; gap:4px; align-items:center; width:90px; flex-shrink:0; }
-.zone-actual-num { font-size:11px; color:var(--text); width:36px; text-align:right; }
-.zone-goal-num { font-size:10px; color:var(--dim); }
-.zone-status { font-size:10px; width:16px; flex-shrink:0; }
-#zone-rationale { font-size:11px; color:var(--dim); margin-top:10px; font-style:italic; line-height:1.5; }
-#tl-canvas-wrap { position:relative; height:140px; width:100%; margin-top:8px; }
-#tl-canvas { width:100%; height:100%; }
-.tl-legend { display:flex; gap:16px; margin-top:8px; flex-wrap:wrap; }
-.tl-legend-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
-.tl-legend-dot { width:10px; height:3px; border-radius:2px; }
-.tl-current { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
-.tl-stat { background:var(--bg3); border:1px solid var(--border); border-radius:3px; padding:8px 12px; }
-.tl-stat .label { font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px; }
-.tl-stat .value { font-size:16px; }
-
-/* Report */
-#report-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:760px; width:100%; margin:0 auto; }
-#report-text { font-size:13px; color:#bbb; line-height:1.9; white-space:pre-wrap; margin-top:16px; }
-#generate-report { background:transparent; border:1px solid var(--gold); color:var(--gold); padding:10px 20px; cursor:pointer; font-size:11px; letter-spacing:.15em; text-transform:uppercase; font-family:Georgia,serif; transition:all .15s; }
-#generate-report:hover { background:var(--gold); color:var(--bg); }
-#generate-report:disabled { opacity:.3; cursor:default; }
-
-/* Goals */
-#goals-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:760px; width:100%; margin:0 auto; }
-.phase-card { border:1px solid var(--border); border-radius:4px; padding:18px 20px; margin-bottom:12px; background:var(--bg2); }
-.phase-card.current { border-color:var(--gold); }
-.phase-card .pc-badge { display:inline-block; font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:3px 10px; border-radius:2px; margin-bottom:6px; }
-.phase-card.current .pc-badge { background:#1a1500; color:var(--gold); }
-.phase-card .pc-badge.upcoming { background:#0f1a0f; color:var(--green); }
-.phase-card .pc-name { font-size:16px; margin-bottom:8px; }
-.phase-card .pc-goal { font-size:12px; color:var(--muted); line-height:1.65; }
-.phase-card .pc-dates { font-size:11px; color:var(--dim); margin-top:10px; }
-
-/* Records tab */
-#records-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:960px; width:100%; margin:0 auto; }
-.pr-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:8px; }
-.pr-distance-card { border:1px solid var(--border); border-radius:4px; background:var(--bg2); overflow:hidden; }
-.pr-distance-header { padding:8px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
-.pr-distance-label { font-size:13px; color:var(--text); }
-.pr-distance-best { font-size:11px; color:var(--gold); margin-left:auto; white-space:nowrap; }
-.pr-table { width:100%; border-collapse:collapse; }
-.pr-table th { font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); text-align:left; padding:5px 12px; border-bottom:1px solid var(--border); font-weight:normal; }
-.pr-table td { font-size:12px; padding:7px 12px; border-bottom:1px solid #161616; }
-.pr-table tr:last-child td { border-bottom:none; }
-.pr-table tr.clickable { cursor:pointer; transition:background .12s; }
-.pr-table tr.clickable:hover td { background:var(--bg3); }
-.pr-rank-1 { color:var(--gold); font-weight:500; }
-.pr-rank-2 { color:#aaa; }
-.pr-rank-3 { color:#888; }
-
-/* KPI / Performance tests */
-#kpi-content { flex:1; overflow-y:auto; padding:24px 20px; max-width:900px; width:100%; margin:0 auto; }
-.kpi-add-form { border:1px solid var(--border); border-radius:4px; padding:18px 20px; background:var(--bg2); margin-bottom:24px; }
-.kpi-add-form h3 { font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); margin-bottom:14px; font-weight:normal; }
-.kpi-form-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
-.kpi-form-row input, .kpi-form-row select { background:transparent; border:none; border-bottom:1px solid #2a2a2a; color:var(--text); font-size:13px; font-family:Georgia,serif; padding:6px 0; outline:none; flex:1; min-width:100px; }
-.kpi-form-row select option { background:var(--bg2); }
-.kpi-submit { background:transparent; border:1px solid var(--green); color:var(--green); padding:8px 16px; cursor:pointer; font-size:11px; letter-spacing:.15em; text-transform:uppercase; font-family:Georgia,serif; transition:all .15s; margin-top:6px; }
-.kpi-submit:hover { background:var(--green); color:var(--bg); }
-.kpi-chart-wrap { margin-bottom:28px; }
-.kpi-chart-title { font-size:13px; margin-bottom:4px; }
-.kpi-chart-sub { font-size:11px; color:var(--muted); margin-bottom:8px; }
-.kpi-sparkline { display:flex; align-items:flex-end; gap:6px; height:60px; }
-.kpi-bar-wrap { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; }
-.kpi-bar { width:100%; background:var(--green); border-radius:2px 2px 0 0; min-height:2px; }
-.kpi-bar-label { font-size:9px; color:var(--dim); white-space:nowrap; }
-.kpi-bar-val { font-size:9px; color:var(--muted); }
-
-/* Spinner */
-.spinner { display:inline-block; width:14px; height:14px; border:1.5px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-
-/* Modal */
-#workout-modal, #body-comp-modal { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.75); align-items:center; justify-content:center; padding:20px; }
-#workout-modal.open, #body-comp-modal.open { display:flex; }
-#modal-box, #bc-modal-box { background:#0d0d0d; border:1px solid var(--border); border-radius:4px; width:100%; max-width:680px; max-height:88vh; overflow-y:auto; padding:24px; position:relative; }
-#bc-modal-box { max-width:620px; }
-.modal-close-btn { position:absolute; top:16px; right:16px; background:transparent; border:none; color:var(--dim); font-size:18px; cursor:pointer; line-height:1; transition:color .15s; }
-.modal-close-btn:hover { color:var(--text); }
-#modal-title, #bc-modal-title { font-size:16px; margin-bottom:4px; padding-right:28px; }
-#modal-meta { font-size:11px; color:var(--muted); margin-bottom:20px; }
-.modal-section { margin-bottom:24px; }
-.modal-section-title { font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; }
-.modal-stats { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
-.modal-stat { background:var(--bg3); border:1px solid var(--border); border-radius:3px; padding:10px 14px; }
-.modal-stat .label { font-size:10px; color:var(--dim); margin-bottom:4px; text-transform:uppercase; letter-spacing:.08em; }
-.modal-stat .value { font-size:18px; }
-.modal-stat .unit { font-size:11px; color:var(--muted); margin-left:3px; }
-.mzone-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-.mzone-label { font-size:11px; color:var(--dim); width:24px; font-weight:500; }
-.mzone-bar-wrap { flex:1; height:16px; background:var(--bg3); border-radius:2px; overflow:hidden; }
-.mzone-bar { height:100%; border-radius:2px; }
-.mzone-val { font-size:11px; color:var(--muted); width:48px; text-align:right; }
-.mini-chart { display:flex; align-items:flex-end; gap:3px; height:80px; margin-top:6px; }
-.mini-bar-wrap { flex:1; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; }
-.mini-bar { width:100%; border-radius:2px 2px 0 0; min-height:2px; flex-shrink:0; }
-.mini-label { font-size:9px; color:var(--dim); white-space:nowrap; flex-shrink:0; }
-.workout-row { display:flex; gap:10px; align-items:center; padding:8px 10px; border-radius:3px; cursor:pointer; transition:background .12s; border:1px solid transparent; margin-bottom:4px; }
-.workout-row:hover { background:var(--bg3); border-color:var(--border); }
-.workout-row .wr-icon { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
-.workout-row .wr-name { font-size:13px; flex:1; }
-.workout-row .wr-meta { font-size:11px; color:var(--muted); }
-.workout-row .wr-arrow { font-size:10px; color:var(--dim); }
-
-/* Body comp modal chart */
-#bc-canvas-wrap { height:200px; width:100%; margin-top:12px; }
-#bc-canvas { width:100%; height:100%; }
-.bc-metric-btns { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
-.bc-metric-btn { background:transparent; border:1px solid var(--border); color:var(--dim); padding:5px 12px; cursor:pointer; font-size:11px; font-family:Georgia,serif; border-radius:2px; transition:all .15s; }
-.bc-metric-btn.active { border-color:var(--gold); color:var(--gold); }
-
-@media (max-width:600px) {
-  #suggestions { grid-template-columns:1fr; }
-  .cards { grid-template-columns:repeat(2,1fr); }
-  nav button { padding:6px 8px; font-size:10px; }
-  .pr-grid { grid-template-columns:1fr; }
-}
-</style>
-</head>
-<body>
-
-<div id="header">
-  <div class="brand">Performance</div>
-  <span class="sep">|</span>
-  <nav>
-    <button onclick="showTab('dashboard',this)" class="active">Dashboard</button>
-    <button onclick="showTab('chat',this)">Coach</button>
-    <button onclick="showTab('records',this)">Records</button>
-    <button onclick="showTab('kpi',this)">KPIs</button>
-    <button onclick="showTab('nutrition',this)">Nutrition</button>
-    <button onclick="showTab('report',this)">Report</button>
-    <button onclick="showTab('goals',this)">Goals</button>
-  </nav>
-  <div class="spacer"></div>
-  <div class="dot" id="status-dot"></div>
-  <button class="logout" onclick="window.location='/logout'">Sign out</button>
-</div>
-
-<div id="main">
-
-  <!-- DASHBOARD -->
-  <div class="tab active" id="tab-dashboard">
-    <div id="dashboard-content">
-      <div id="phase-banner">
-        <div class="phase-label" style="color:var(--gold)">Current Phase</div>
-        <div class="phase-name" id="db-phase-name">Loading...</div>
-        <div class="phase-goal" id="db-phase-goal"></div>
-        <div class="phase-days" id="db-phase-days"></div>
-      </div>
-      <div id="nutrition-alert"></div>
-      <div class="section-title">Body Composition</div>
-      <div class="cards" id="body-comp-cards"><div class="card"><div class="label">Loading</div><div class="value">—</div></div></div>
-      <div class="section-title">Last 7 Days</div>
-      <div class="cards" id="activity-cards"><div class="card"><div class="label">Loading</div><div class="value">—</div></div></div>
-      <div class="section-title">Daily Breakdown</div>
-      <div id="week-chart"></div>
-      <div class="section-title">Recovery</div>
-      <div class="cards" id="recovery-cards"><div class="card"><div class="label">Loading</div><div class="value">—</div></div></div>
-      <div class="section-title">HR Zones vs Weekly Goals</div>
-      <div id="zone-chart"><div class="spinner"></div></div>
-      <div id="zone-rationale"></div>
-      <div class="section-title">Training Load (ATL / CTL / TSB)</div>
-      <div id="training-load-chart">
-        <div class="tl-current" id="tl-current-stats"></div>
-        <div id="tl-canvas-wrap"><canvas id="tl-canvas"></canvas></div>
-        <div class="tl-legend">
-          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#c8a96e"></div>CTL — Fitness</div>
-          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#a03030"></div>ATL — Fatigue</div>
-          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#4a7c59"></div>TSB — Form</div>
-        </div>
-      </div>
-      <div class="section-title">Nutrition (Last 7 Days)</div>
-      <div class="cards" id="nutrition-cards"><div class="card"><div class="label">Loading</div><div class="value">—</div></div></div>
-    </div>
-  </div>
-
-  <!-- CHAT -->
-  <div class="tab" id="tab-chat">
-    <div id="chat-messages">
-      <div id="chat-empty">
-        <h2>Your training data,<br><span style="color:var(--gold)">on demand.</span></h2>
-        <p>Ask anything about your training, body composition, nutrition, or recovery.</p>
-      </div>
-      <div id="suggestions">
-        <button class="sug" onclick="sendMsg('How was my training last week?')">How was my training last week?</button>
-        <button class="sug" onclick="sendMsg('How is my body composition progressing?')">How is my body composition progressing?</button>
-        <button class="sug" onclick="sendMsg('Am I eating enough protein for my training?')">Am I eating enough protein?</button>
-        <button class="sug" onclick="sendMsg('Am I showing signs of overtraining?')">Am I showing signs of overtraining?</button>
-        <button class="sug" onclick="sendMsg('What should I focus on this week given my current phase?')">What should I focus on this week?</button>
-        <button class="sug" onclick="sendMsg('What\'s my longest ride this year?')">What's my longest ride this year?</button>
-        <button class="sug" onclick="sendMsg('How are my HR zones distributed this month?')">How are my HR zones this month?</button>
-        <button class="sug" onclick="sendMsg('Show me my top running PRs')">Show me my top running PRs</button>
-      </div>
-    </div>
-    <div style="max-width:760px;width:100%;margin:0 auto;">
-      <div id="chat-input">
-        <div id="input-row">
-          <textarea id="inp" rows="1" placeholder="Ask your coach..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-          <button id="sendbtn" onclick="sendMsg()" disabled>Send</button>
-        </div>
-        <div id="hint">Enter to send · Shift+Enter for new line</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- RECORDS -->
-  <div class="tab" id="tab-records">
-    <div id="records-content">
-      <div class="section-title" style="margin-top:0">Running Personal Records</div>
-      <div id="run-prs"><div class="spinner"></div></div>
-      <div class="section-title">Cycling Personal Records</div>
-      <div id="ride-prs"><div class="spinner"></div></div>
-    </div>
-  </div>
-
-  <!-- KPIs -->
-  <div class="tab" id="tab-kpi">
-    <div id="kpi-content">
-      <div class="kpi-add-form">
-        <h3>Log a Performance Test</h3>
-        <div class="kpi-form-row">
-          <select id="kpi-type">
-            <option value="FTP">FTP (watts)</option>
-            <option value="Pull-ups">Pull-ups (max reps)</option>
-            <option value="Push-ups">Push-ups (max reps)</option>
-            <option value="Dips">Dips (max reps)</option>
-            <option value="Plank">Plank hold (seconds)</option>
-            <option value="VO2max">VO2max estimate</option>
-            <option value="Other">Other</option>
-          </select>
-          <input type="number" id="kpi-value" placeholder="Value" step="0.1">
-          <input type="date" id="kpi-date">
-        </div>
-        <div class="kpi-form-row">
-          <input type="text" id="kpi-notes" placeholder="Notes (optional)" style="flex:3">
-        </div>
-        <button class="kpi-submit" onclick="submitKPI()">Log Test</button>
-        <span id="kpi-status" style="font-size:11px;color:var(--green);margin-left:12px"></span>
-      </div>
-      <div class="section-title" style="margin-top:0">Performance Test History</div>
-      <div id="kpi-charts"><div class="spinner"></div></div>
-    </div>
-  </div>
-
-
-  <!-- NUTRITION -->
-  <div class="tab" id="tab-nutrition">
-    <div id="nutrition-content">
-      <div class="section-title" style="margin-top:0">This Week's Nutrition</div>
-      <div id="nutr-day-grid"><div class="spinner"></div></div>
-      <div class="section-title">Actuals vs Goals</div>
-      <div id="nutr-goal-bars"><div class="spinner"></div></div>
-      <div id="nutr-rationale"></div>
-    </div>
-  </div>
-
-  <!-- REPORT -->
-  <div class="tab" id="tab-report">
-    <div id="report-content">
-      <div class="section-title" style="margin-top:0">Weekly Training Report</div>
-      <button id="generate-report" onclick="generateReport()">Generate This Week's Report</button>
-      <div id="report-text"></div>
-    </div>
-  </div>
-
-  <!-- GOALS -->
-  <div class="tab" id="tab-goals">
-    <div id="goals-content">
-      <div class="section-title" style="margin-top:0">Training Phases</div>
-      <div id="phases-list"><div class="spinner"></div></div>
-    </div>
-  </div>
-
-</div>
-
-<!-- Workout modal -->
-<div id="workout-modal" onclick="closeModal(event)">
-  <div id="modal-box">
-    <button class="modal-close-btn" onclick="closeWorkoutModal()">✕</button>
-    <div id="modal-title">Loading...</div>
-    <div id="modal-meta"></div>
-    <div id="modal-stats" class="modal-stats"></div>
-    <div id="modal-zones" class="modal-section"></div>
-    <div id="modal-pace-chart" class="modal-section"></div>
-    <div id="modal-elev-chart" class="modal-section"></div>
-  </div>
-</div>
-
-<!-- Body comp modal -->
-<div id="body-comp-modal" onclick="closeBCModal(event)">
-  <div id="bc-modal-box">
-    <button class="modal-close-btn" onclick="closeBodyCompModal()">✕</button>
-    <div id="bc-modal-title">Body Composition</div>
-    <div class="bc-metric-btns">
-      <button class="bc-metric-btn active" onclick="showBCMetric('body_fat_pct',this)">Body Fat %</button>
-      <button class="bc-metric-btn" onclick="showBCMetric('weight_lb',this)">Weight</button>
-      <button class="bc-metric-btn" onclick="showBCMetric('skeletal_muscle_mass_lb',this)">Muscle Mass</button>
-      <button class="bc-metric-btn" onclick="showBCMetric('inbody_score',this)">InBody Score</button>
-    </div>
-    <div id="bc-canvas-wrap"><canvas id="bc-canvas"></canvas></div>
-    <div id="bc-data-points" style="margin-top:12px;font-size:12px;color:var(--muted);"></div>
-  </div>
-</div>
-
-<script>
-const history = [];
-let loading = false;
-let bcData = [];
-let bcMetric = 'body_fat_pct';
-
-// ── Tab navigation ────────────────────────────────────────────
-function showTab(name, btn) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+// ── Boot: activate dashboard tab ──────────────────────────────
+setTimeout(() => {
+  const btn = document.querySelector('#nav button');
   btn.classList.add('active');
-  if (name === 'dashboard') loadDashboard();
-  if (name === 'goals')     loadGoals();
-  if (name === 'records')   loadRecords();
-  if (name === 'kpi')       loadKPIs();
-  if (name === 'nutrition') loadNutrition();
-}
-
-function setLoading(v) {
-  loading = v;
-  document.getElementById('status-dot').className = 'dot' + (v ? ' loading' : '');
-  const btn = document.getElementById('sendbtn');
-  if (btn) btn.disabled = v || !document.getElementById('inp').value.trim();
-}
-
-// ── Chat ──────────────────────────────────────────────────────
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
-  document.getElementById('sendbtn').disabled = !el.value.trim() || loading;
-}
-function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
-function scrollBottom() { const m = document.getElementById('chat-messages'); m.scrollTop = m.scrollHeight; }
-function hideEmpty() { ['chat-empty','suggestions'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); }); }
-function addUserMsg(text) {
-  hideEmpty();
-  const div = document.createElement('div'); div.className = 'msg-user';
-  div.innerHTML = `<div class="dot2"></div><div class="text">${esc(text)}</div>`;
-  document.getElementById('chat-messages').appendChild(div); scrollBottom();
-}
-function showStatusMsg(text) {
-  let el = document.getElementById('chat-status');
-  if (!el) { el = document.createElement('div'); el.id='chat-status'; el.className='status-line'; el.innerHTML='<div class="label">Coach</div><div class="text" id="chat-status-text"></div>'; document.getElementById('chat-messages').appendChild(el); }
-  document.getElementById('chat-status-text').textContent = text; scrollBottom();
-}
-function removeStatusMsg() { const el = document.getElementById('chat-status'); if (el) el.remove(); }
-function addCoachMsg(text, queries) {
-  removeStatusMsg();
-  const div = document.createElement('div'); div.className = 'msg-coach';
-  let qtags = queries && queries.length ? `<div class="qtags">${queries.map(q => `<span class="qtag">${esc(q)}</span>`).join('')}</div>` : '';
-  div.innerHTML = `<div class="label">Coach</div><div class="text">${esc(text)}</div>${qtags}`;
-  document.getElementById('chat-messages').appendChild(div); scrollBottom();
-}
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-async function sendMsg(textArg) {
-  const inp = document.getElementById('inp');
-  const q = (textArg || inp.value).trim();
-  if (!q || loading) return;
-  inp.value = ''; inp.style.height = 'auto';
-  document.getElementById('sendbtn').disabled = true;
-  addUserMsg(q); setLoading(true); showStatusMsg('Analyzing your data...');
-  try {
-    const r = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question:q, history:history.slice(-6)}) });
-    const data = await r.json();
-    if (data.error) throw new Error(data.error);
-    history.push({role:'user',content:q}); history.push({role:'assistant',content:data.answer});
-    addCoachMsg(data.answer, data.queries_run);
-  } catch(e) { addCoachMsg('Error: ' + e.message, []); }
-  setLoading(false); document.getElementById('inp').focus();
-}
-
-// ── Dashboard ─────────────────────────────────────────────────
-let dashLoaded = false;
-async function loadDashboard() {
-  if (dashLoaded) return;
-  dashLoaded = true;
-  try {
-    const r = await fetch('/api/dashboard');
-    const d = await r.json();
-    if (d.error) return;
-
-    if (d.phase) {
-      document.getElementById('db-phase-name').textContent = d.phase.name;
-      document.getElementById('db-phase-goal').textContent = d.phase.goal;
-      const days = d.phase.days_remaining;
-      document.getElementById('db-phase-days').textContent = days > 0 ? `${days} days remaining` : 'Phase complete';
-    }
-    if (d.missing_nutrition && d.missing_nutrition.length) {
-      const alert = document.getElementById('nutrition-alert');
-      alert.style.display = 'block';
-      alert.textContent = `⚠ Missing nutrition log for: ${d.missing_nutrition.join(', ')}. Log your food to track body composition progress.`;
-    }
-    if (d.body_comp) {
-      const b = d.body_comp;
-      bcData = await fetch('/api/body_comp_history').then(r=>r.json()).catch(()=>[]);
-      const bfDiff = (b.body_fat_pct - 15).toFixed(1);
-      document.getElementById('body-comp-cards').innerHTML = `
-        <div class="card clickable ${b.body_fat_pct > 20 ? 'warn' : b.body_fat_pct < 15 ? 'good' : ''}" onclick="openBodyCompModal('body_fat_pct')">
-          <div class="label">Body Fat ↗</div>
-          <div class="value">${b.body_fat_pct}<span class="unit">%</span></div>
-          <div class="sub">${bfDiff > 0 ? '+' : ''}${bfDiff}% from target</div>
-        </div>
-        <div class="card clickable ${b.skeletal_muscle_mass_lb >= 105 ? 'good' : ''}" onclick="openBodyCompModal('skeletal_muscle_mass_lb')">
-          <div class="label">Muscle Mass ↗</div>
-          <div class="value">${b.skeletal_muscle_mass_lb}<span class="unit">lbs</span></div>
-          <div class="sub">Target 105-110 lbs</div>
-        </div>
-        <div class="card clickable" onclick="openBodyCompModal('weight_lb')">
-          <div class="label">Weight ↗</div>
-          <div class="value">${b.weight_lb}<span class="unit">lbs</span></div>
-          <div class="sub">${b.date}</div>
-        </div>
-        <div class="card clickable ${b.inbody_score >= 90 ? 'good' : ''}" onclick="openBodyCompModal('inbody_score')">
-          <div class="label">InBody Score ↗</div>
-          <div class="value">${b.inbody_score}</div>
-          <div class="sub">Visceral fat: ${b.visceral_fat_level}</div>
-        </div>`;
-    }
-    if (d.activity && d.activity.length) {
-      const totals = d.activity.reduce((acc,day) => {
-        acc.run += day.run_min||0; acc.ride += day.ride_min||0;
-        acc.strength += day.strength_min||0; acc.cardio += day.cardio_min||0;
-        acc.z2 += day.z2_min||0;
-        return acc;
-      }, {run:0,ride:0,strength:0,cardio:0,z2:0});
-      document.getElementById('activity-cards').innerHTML = `
-        <div class="card"><div class="label">Run</div><div class="value">${Math.round(totals.run)}<span class="unit">min</span></div></div>
-        <div class="card highlight"><div class="label">Ride</div><div class="value">${Math.round(totals.ride)}<span class="unit">min</span></div></div>
-        <div class="card"><div class="label">Strength</div><div class="value">${Math.round(totals.strength)}<span class="unit">min</span></div></div>
-        <div class="card"><div class="label">Cardio</div><div class="value">${Math.round(totals.cardio)}<span class="unit">min</span></div></div>
-        <div class="card good"><div class="label">Z2 Time</div><div class="value">${Math.round(totals.z2)}<span class="unit">min</span></div></div>`;
-
-      window.workoutsByDate = {};
-      (d.workouts || []).forEach(w => { if (!window.workoutsByDate[w.date]) window.workoutsByDate[w.date]=[]; window.workoutsByDate[w.date].push(w); });
-
-      const maxMin = Math.max(...d.activity.map(a=>(a.run_min||0)+(a.ride_min||0)+(a.strength_min||0)+(a.cardio_min||0)+(a.walk_min||0)),1);
-      const chart = document.getElementById('week-chart');
-      chart.innerHTML = d.activity.map(day => {
-        const total = (day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
-        const pct = v => Math.round(v/maxMin*100);
-        const dayLabel = new Date(day.date).toLocaleDateString('en-US',{weekday:'short'});
-        const hasW = window.workoutsByDate[day.date] && window.workoutsByDate[day.date].length > 0;
-        const clickable = hasW ? `onclick="event.stopPropagation();openDayWorkouts('${day.date}',window.workoutsByDate['${day.date}']||[])" style="cursor:pointer"` : '';
-        return `<div class="day-row ${hasW?'hover-day':''}" ${clickable} title="${hasW?'Click to view workouts':''}">
-          <div class="day-label" style="color:${hasW?'var(--text)':'var(--dim)'}">${dayLabel}</div>
-          <div class="bar-group">
-            ${day.run_min>0?`<div class="bar run" style="width:${pct(day.run_min)}%" title="Run: ${Math.round(day.run_min)}min"></div>`:''}
-            ${day.ride_min>0?`<div class="bar ride" style="width:${pct(day.ride_min)}%" title="Ride: ${Math.round(day.ride_min)}min"></div>`:''}
-            ${day.strength_min>0?`<div class="bar strength" style="width:${pct(day.strength_min)}%" title="Strength: ${Math.round(day.strength_min)}min"></div>`:''}
-            ${day.cardio_min>0?`<div class="bar cardio" style="width:${pct(day.cardio_min)}%" title="Cardio: ${Math.round(day.cardio_min)}min"></div>`:''}
-            ${day.walk_min>0?`<div class="bar walk" style="width:${pct(day.walk_min)}%" title="Walk: ${Math.round(day.walk_min)}min"></div>`:''}
-          </div>
-          <div class="day-total">${Math.round(total)>0?Math.round(total)+'m':''}</div>
-        </div>`;
-      }).join('');
-    }
-    loadZoneChart(d.activity);
-    loadTrainingLoad();
-    if (d.health && d.health.length) {
-      const recent = d.health[0];
-      const avgHrv = d.health.filter(h=>h.hrv_ms).reduce((s,h)=>s+h.hrv_ms,0)/(d.health.filter(h=>h.hrv_ms).length||1);
-      document.getElementById('recovery-cards').innerHTML = `
-        <div class="card ${recent.resting_hr_bpm > 60 ? 'warn' : 'good'}"><div class="label">Resting HR</div><div class="value">${recent.resting_hr_bpm||'—'}<span class="unit">bpm</span></div><div class="sub">${recent.date}</div></div>
-        <div class="card ${avgHrv>50?'good':avgHrv<30?'warn':''}"><div class="label">Avg HRV</div><div class="value">${Math.round(avgHrv)||'—'}<span class="unit">ms</span></div><div class="sub">7-day avg</div></div>`;
-    }
-    if (d.nutrition && d.nutrition.length) {
-      const avgCal = d.nutrition.reduce((s,n)=>s+(n.calories_kcal||0),0)/d.nutrition.length;
-      const avgPro = d.nutrition.reduce((s,n)=>s+(n.protein_g||0),0)/d.nutrition.length;
-      document.getElementById('nutrition-cards').innerHTML = `
-        <div class="card ${avgCal<1800?'warn':''}"><div class="label">Avg Calories</div><div class="value">${Math.round(avgCal)}<span class="unit">kcal</span></div><div class="sub">${d.nutrition.length} days logged</div></div>
-        <div class="card ${avgPro<150?'warn':'good'}"><div class="label">Avg Protein</div><div class="value">${Math.round(avgPro)}<span class="unit">g</span></div><div class="sub">Target: 160-180g</div></div>`;
-    } else {
-      document.getElementById('nutrition-cards').innerHTML = `<div class="card warn"><div class="label">Nutrition</div><div class="value" style="font-size:14px">No data logged</div></div>`;
-    }
-  } catch(e) { console.error('Dashboard error:', e); }
-}
-
-// ── Body comp modal ───────────────────────────────────────────
-const BC_META = {
-  body_fat_pct:             { label:'Body Fat %',    unit:'%',   color:'#c8a96e', target:15,  targetLabel:'Target: <15%' },
-  weight_lb:                { label:'Weight',         unit:'lbs', color:'#4a6fa5', target:null, targetLabel:'' },
-  skeletal_muscle_mass_lb:  { label:'Muscle Mass',   unit:'lbs', color:'#4a7c59', target:105, targetLabel:'Target: 105-110 lbs' },
-  inbody_score:             { label:'InBody Score',  unit:'',    color:'#7a4a8a', target:null, targetLabel:'' },
-};
-
-function openBodyCompModal(metric) {
-  bcMetric = metric;
-  document.querySelectorAll('.bc-metric-btn').forEach(b => {
-    const m = b.getAttribute('onclick').match(/'([^']+)'/)?.[1];
-    b.classList.toggle('active', m === metric);
-  });
-  document.getElementById('bc-modal-title').textContent = BC_META[metric]?.label || metric;
-  document.getElementById('body-comp-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  renderBCChart(metric);
-}
-
-function renderBCChart(metric) {
-  const meta = BC_META[metric] || {};
-  const canvas = document.getElementById('bc-canvas');
-  const wrap   = document.getElementById('bc-canvas-wrap');
-  const data   = (bcData || []).filter(d => d[metric] != null);
-
-  if (!data.length) {
-    document.getElementById('bc-data-points').textContent = 'No data available.';
-    return;
-  }
-
-  canvas.width  = wrap.offsetWidth * window.devicePixelRatio;
-  canvas.height = wrap.offsetHeight * window.devicePixelRatio;
-  canvas.style.width  = wrap.offsetWidth + 'px';
-  canvas.style.height = wrap.offsetHeight + 'px';
-
-  const ctx = canvas.getContext('2d');
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  ctx.clearRect(0, 0, wrap.offsetWidth, wrap.offsetHeight);
-
-  const W = wrap.offsetWidth, H = wrap.offsetHeight;
-  const pad = {top:20, right:20, bottom:40, left:44};
-  const cW = W - pad.left - pad.right;
-  const cH = H - pad.top  - pad.bottom;
-
-  const vals   = data.map(d => parseFloat(d[metric]));
-  const minVal = Math.min(...vals) * 0.97;
-  const maxVal = Math.max(...vals) * 1.03;
-  const range  = maxVal - minVal || 1;
-
-  const xScale = i => pad.left + (i / (data.length - 1 || 1)) * cW;
-  const yScale = v => pad.top + cH - ((v - minVal) / range) * cH;
-
-  // Target line
-  if (meta.target) {
-    const ty = yScale(meta.target);
-    if (ty >= pad.top && ty <= pad.top + cH) {
-      ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
-      ctx.beginPath(); ctx.moveTo(pad.left, ty); ctx.lineTo(pad.left+cW, ty); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = '#555'; ctx.font = '10px Georgia'; ctx.textAlign = 'right';
-      ctx.fillText('Target', pad.left - 4, ty + 3);
-    }
-  }
-
-  // Gradient fill under line
-  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
-  grad.addColorStop(0, meta.color + '40');
-  grad.addColorStop(1, meta.color + '00');
-  ctx.beginPath();
-  data.forEach((d, i) => { if (i===0) ctx.moveTo(xScale(i), yScale(vals[i])); else ctx.lineTo(xScale(i), yScale(vals[i])); });
-  ctx.lineTo(xScale(data.length-1), pad.top+cH);
-  ctx.lineTo(xScale(0), pad.top+cH);
-  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
-
-  // Line (curved)
-  ctx.beginPath(); ctx.strokeStyle = meta.color; ctx.lineWidth = 2.5;
-  data.forEach((d, i) => {
-    const x = xScale(i), y = yScale(vals[i]);
-    if (i === 0) { ctx.moveTo(x, y); return; }
-    const px = xScale(i-1), py = yScale(vals[i-1]);
-    const cpx = (px + x) / 2;
-    ctx.bezierCurveTo(cpx, py, cpx, y, x, y);
-  });
-  ctx.stroke();
-
-  // Data points + labels
-  ctx.font = '10px Georgia'; ctx.textAlign = 'center';
-  data.forEach((d, i) => {
-    const x = xScale(i), y = yScale(vals[i]);
-    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fillStyle = meta.color; ctx.fill();
-    ctx.fillStyle = '#aaa';
-    ctx.fillText(vals[i].toFixed(metric === 'inbody_score' ? 0 : 1) + (meta.unit||''), x, y - 10);
-  });
-
-  // X axis dates
-  ctx.fillStyle = '#444'; ctx.textAlign = 'center';
-  data.forEach((d, i) => {
-    const dt = new Date(d.date);
-    const label = (dt.getMonth()+1) + '/' + dt.getDate();
-    ctx.fillText(label, xScale(i), H - 8);
-  });
-
-  // Y axis labels
-  ctx.textAlign = 'right';
-  [minVal, (minVal+maxVal)/2, maxVal].forEach(v => {
-    const y = yScale(v);
-    ctx.fillText(v.toFixed(1), pad.left - 6, y + 3);
-  });
-
-  // Data points summary
-  document.getElementById('bc-data-points').innerHTML = data.map(d =>
-    `<span style="margin-right:16px">${d.date}: <strong>${parseFloat(d[metric]).toFixed(1)}${meta.unit}</strong></span>`
-  ).join('');
-}
-
-function showBCMetric(metric, btn) {
-  document.querySelectorAll('.bc-metric-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  bcMetric = metric;
-  document.getElementById('bc-modal-title').textContent = BC_META[metric]?.label || metric;
-  renderBCChart(metric);
-}
-
-function closeBodyCompModal() {
-  document.getElementById('body-comp-modal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function closeBCModal(e) { if (e.target === document.getElementById('body-comp-modal')) closeBodyCompModal(); }
-
-// ── Zone chart ────────────────────────────────────────────────
-async function loadZoneChart(activityData) {
-  const chart = document.getElementById('zone-chart');
-  const rationale = document.getElementById('zone-rationale');
-  chart.innerHTML = '<div class="spinner"></div>';
-  try {
-    const actual = {z1:0,z2:0,z3:0,z4:0,z5:0};
-    if (activityData) activityData.forEach(day => { actual.z1+=day.z1_min||0; actual.z2+=day.z2_min||0; actual.z3+=day.z3_min||0; actual.z4+=day.z4_min||0; actual.z5+=day.z5_min||0; });
-    const r = await fetch('/api/zone_goals');
-    const goals = await r.json();
-    const zones = [
-      {key:'z1',label:'Z1',color:'#555',name:'Recovery'},
-      {key:'z2',label:'Z2',color:'#4a7c59',name:'Aerobic'},
-      {key:'z3',label:'Z3',color:'#c8a96e',name:'Tempo'},
-      {key:'z4',label:'Z4',color:'#c07040',name:'Threshold'},
-      {key:'z5',label:'Z5',color:'#a03030',name:'Max'},
-    ];
-    const maxVal = Math.max(...zones.map(z => Math.max(actual[z.key]||0,goals[z.key]||0)),1);
-    chart.innerHTML = zones.map(z => {
-      const act=Math.round(actual[z.key]||0), goal=goals[z.key]||0;
-      const actPct=Math.round(act/maxVal*100), goalPct=Math.round(goal/maxVal*100);
-      const status = act>=goal?'✓':act>=goal*.8?'~':'';
-      const statusColor = act>=goal?'var(--green)':act>=goal*.8?'var(--gold)':'var(--dim)';
-      return `<div class="zone-row">
-        <div class="zone-label" title="${z.name}">${z.label}</div>
-        <div class="zone-bar-wrap">
-          <div class="zone-bar-actual" style="width:${actPct}%;background:${z.color}"></div>
-          <div class="zone-goal-line" style="left:${goalPct}%"></div>
-        </div>
-        <div class="zone-nums"><div class="zone-actual-num">${act}m</div><div class="zone-goal-num">/ ${goal}m</div></div>
-        <div class="zone-status" style="color:${statusColor}">${status}</div>
-      </div>`;
-    }).join('');
-    if (goals.rationale) rationale.textContent = goals.rationale;
-  } catch(e) { chart.textContent = 'Could not load zone goals.'; }
-}
-
-// ── Training load chart ───────────────────────────────────────
-async function loadTrainingLoad() {
-  try {
-    const r = await fetch('/api/training_load');
-    const d = await r.json();
-    if (d.error || !d.data || !d.data.length) return;
-    const data = d.data, current = d.current;
-    const tsb = current.tsb || 0;
-    const tsbColor = tsb>5?'var(--green)':tsb<-30?'#a03030':tsb<-10?'var(--gold)':'var(--text)';
-    const tsbLabel = tsb>5?'Fresh':tsb<-30?'High Fatigue':tsb<-10?'Productive Load':'Neutral';
-    document.getElementById('tl-current-stats').innerHTML = `
-      <div class="tl-stat"><div class="label">CTL — Fitness</div><div class="value" style="color:#c8a96e">${current.ctl}</div></div>
-      <div class="tl-stat"><div class="label">ATL — Fatigue</div><div class="value" style="color:#a03030">${current.atl}</div></div>
-      <div class="tl-stat"><div class="label">TSB — Form</div><div class="value" style="color:${tsbColor}">${current.tsb>0?'+':''}${current.tsb} (${tsbLabel})</div></div>
-      <div class="tl-stat"><div class="label">Today TSS</div><div class="value">${current.tss}</div></div>`;
-    const canvas = document.getElementById('tl-canvas');
-    const wrap   = document.getElementById('tl-canvas-wrap');
-    canvas.width  = wrap.offsetWidth * window.devicePixelRatio;
-    canvas.height = wrap.offsetHeight * window.devicePixelRatio;
-    canvas.style.width  = wrap.offsetWidth + 'px';
-    canvas.style.height = wrap.offsetHeight + 'px';
-    const ctx = canvas.getContext('2d');
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    const W=wrap.offsetWidth,H=wrap.offsetHeight,pad={top:10,right:10,bottom:24,left:36};
-    const cW=W-pad.left-pad.right,cH=H-pad.top-pad.bottom;
-    const allVals=data.flatMap(d=>[d.ctl,d.atl,d.tsb]);
-    const minVal=Math.min(...allVals,-40),maxVal=Math.max(...allVals,60),range=maxVal-minVal||1;
-    const xScale=i=>pad.left+(i/(data.length-1))*cW;
-    const yScale=v=>pad.top+cH-((v-minVal)/range)*cH;
-    const zeroY=yScale(0);
-    ctx.strokeStyle='#2a2a2a';ctx.lineWidth=1;ctx.setLineDash([4,4]);
-    ctx.beginPath();ctx.moveTo(pad.left,zeroY);ctx.lineTo(pad.left+cW,zeroY);ctx.stroke();ctx.setLineDash([]);
-    ctx.beginPath();data.forEach((d,i)=>{ if(i===0)ctx.moveTo(xScale(i),yScale(d.tsb));else ctx.lineTo(xScale(i),yScale(d.tsb)); });
-    ctx.lineTo(xScale(data.length-1),zeroY);ctx.lineTo(xScale(0),zeroY);ctx.closePath();
-    ctx.fillStyle='rgba(74,124,89,0.15)';ctx.fill();
-    const drawLine=(key,color,width)=>{ ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=width; data.forEach((d,i)=>{ if(i===0)ctx.moveTo(xScale(i),yScale(d[key]));else ctx.lineTo(xScale(i),yScale(d[key])); });ctx.stroke(); };
-    drawLine('tsb','#4a7c59',1.5);drawLine('atl','#a03030',1.5);drawLine('ctl','#c8a96e',2);
-    ctx.fillStyle='#444';ctx.font='10px Georgia';ctx.textAlign='right';
-    [0,Math.round(maxVal*.5),Math.round(maxVal),Math.round(minVal*.5)].forEach(v=>{ const y=yScale(v); if(y>=pad.top&&y<=pad.top+cH) ctx.fillText(v,pad.left-4,y+3); });
-    ctx.textAlign='center';
-    data.forEach((d,i)=>{ if(i%14===0){ const dt=new Date(d.date); ctx.fillText((dt.getMonth()+1)+'/'+dt.getDate(),xScale(i),H-6); } });
-  } catch(e) { console.error('Training load error:',e); }
-}
-
-// ── Records tab ───────────────────────────────────────────────
-let recordsLoaded = false;
-async function loadRecords() {
-  if (recordsLoaded) return;
-  recordsLoaded = true;
-  try {
-    const r = await fetch('/api/records');
-    const d = await r.json();
-    renderPRTable('run-prs', d.runs || [], 'Running');
-    renderPRTable('ride-prs', d.rides || [], 'Cycling');
-  } catch(e) {
-    document.getElementById('run-prs').textContent = 'Error loading records.';
-  }
-}
-
-function renderPRTable(elId, prs, sport) {
-  const el = document.getElementById(elId);
-  if (!prs.length) { el.innerHTML = '<p style="color:var(--dim);font-size:12px">No records found.</p>'; return; }
-
-  const byDist = {};
-  prs.forEach(p => {
-    if (!byDist[p.distance_label]) byDist[p.distance_label] = [];
-    byDist[p.distance_label].push(p);
-  });
-
-  const isRun = sport === 'Running';
-  const dists = Object.keys(byDist);
-  let html = '<div class="pr-grid">';
-
-  dists.forEach(dist => {
-    const rows = byDist[dist];
-    const best = rows.find(r => r.rank === 1);
-    const bestDisplay = best ? (best.best_pace_display || formatTime(best.best_time_sec)) : '—';
-    const paceLabel = isRun ? 'Pace / Time' : 'Time';
-
-    html += `<div class="pr-distance-card">
-      <div class="pr-distance-header">
-        <span class="pr-distance-label">🏅 ${dist}</span>
-        <span class="pr-distance-best">${bestDisplay}</span>
-      </div>
-      <table class="pr-table">
-        <thead><tr><th>Rank</th><th>${paceLabel}</th><th>Date</th></tr></thead>
-        <tbody>`;
-
-    rows.forEach(p => {
-      const rankClass = p.rank === 1 ? 'pr-rank-1' : p.rank === 2 ? 'pr-rank-2' : p.rank === 3 ? 'pr-rank-3' : '';
-      const medal = p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : `#${p.rank}`;
-      const hasActivity = p.activity_id && p.activity_id !== null;
-      const rowAttrs = hasActivity
-        ? `class="clickable" style="cursor:pointer" onclick="openWorkout(${p.activity_id}, '${dist.replace(/'/g,'')} ${p.achieved_date||''}')"` 
-        : '';
-      html += `<tr ${rowAttrs}>
-        <td class="${rankClass}">${medal}</td>
-        <td class="${rankClass}">${p.best_pace_display || formatTime(p.best_time_sec)}${hasActivity ? ' <span style="color:var(--dim);font-size:10px">›</span>' : ''}</td>
-        <td style="color:var(--dim);font-size:11px">${p.achieved_date || '—'}</td>
-      </tr>`;
-    });
-
-    html += `</tbody></table></div>`;
-  });
-
-  html += '</div>';
-  el.innerHTML = html;
-}
-
-function formatTime(sec) {
-  if (!sec) return '—';
-  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
-  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  return `${m}:${String(s).padStart(2,'0')}`;
-}
-
-// ── KPI tab ───────────────────────────────────────────────────
-let kpiLoaded = false;
-async function loadKPIs() {
-  if (kpiLoaded) return;
-  kpiLoaded = true;
-  document.getElementById('kpi-date').value = new Date().toISOString().slice(0,10);
-  await refreshKPICharts();
-}
-
-async function refreshKPICharts() {
-  const container = document.getElementById('kpi-charts');
-  try {
-    const r = await fetch('/api/performance_tests');
-    const tests = await r.json();
-    if (!tests.length) { container.innerHTML = '<p style="color:var(--dim);font-size:12px">No performance tests logged yet. Use the form above to add your first test.</p>'; return; }
-    // Group by test_type
-    const byType = {};
-    tests.forEach(t => { if (!byType[t.test_type]) byType[t.test_type]=[]; byType[t.test_type].push(t); });
-    container.innerHTML = Object.keys(byType).map(type => {
-      const items = byType[type].sort((a,b) => a.date.localeCompare(b.date));
-      const latest = items[items.length-1];
-      const best = items.reduce((b,t) => t.value > b.value ? t : b, items[0]);
-      const maxVal = Math.max(...items.map(t=>t.value));
-      const bars = items.map(t => {
-        const h = Math.round(t.value/maxVal*100);
-        return `<div class="kpi-bar-wrap" title="${t.date}: ${t.value} ${t.unit||''}">
-          <div class="kpi-bar-val">${t.value}</div>
-          <div class="kpi-bar" style="height:${Math.max(h,4)}%"></div>
-          <div class="kpi-bar-label">${t.date.slice(5)}</div>
-        </div>`;
-      }).join('');
-      return `<div class="kpi-chart-wrap">
-        <div class="kpi-chart-title">${type}</div>
-        <div class="kpi-chart-sub">Latest: <strong>${latest.value} ${latest.unit||''}</strong> (${latest.date}) · Best: <strong>${best.value} ${best.unit||''}</strong> (${best.date})</div>
-        <div class="kpi-sparkline">${bars}</div>
-      </div>`;
-    }).join('');
-  } catch(e) { container.textContent = 'Error loading KPIs: ' + e.message; }
-}
-
-async function submitKPI() {
-  const type  = document.getElementById('kpi-type').value;
-  const value = document.getElementById('kpi-value').value;
-  const date  = document.getElementById('kpi-date').value;
-  const notes = document.getElementById('kpi-notes').value;
-  const status = document.getElementById('kpi-status');
-  if (!value || !date) { status.style.color='#c0392b'; status.textContent='Please enter a value and date.'; return; }
-  const units = {FTP:'watts','Pull-ups':'reps','Push-ups':'reps',Dips:'reps',Plank:'seconds',VO2max:'ml/kg/min',Other:''};
-  try {
-    const r = await fetch('/api/performance_tests', { method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({test_type:type,value:parseFloat(value),unit:units[type]||'',date,notes}) });
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-    status.style.color='var(--green)'; status.textContent='Logged!';
-    document.getElementById('kpi-value').value = '';
-    document.getElementById('kpi-notes').value = '';
-    kpiLoaded = false; await refreshKPICharts(); kpiLoaded = true;
-    setTimeout(() => status.textContent='', 3000);
-  } catch(e) { status.style.color='#c0392b'; status.textContent='Error: '+e.message; }
-}
-
-// ── Report ────────────────────────────────────────────────────
-async function generateReport() {
-  const btn = document.getElementById('generate-report');
-  const out  = document.getElementById('report-text');
-  btn.disabled = true; btn.textContent = 'Generating...'; out.textContent = '';
-  setLoading(true);
-  try {
-    const r = await fetch('/api/weekly_report');
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-    out.textContent = d.report;
-  } catch(e) { out.textContent = 'Error: '+e.message; }
-  btn.disabled = false; btn.textContent = "Generate This Week's Report"; setLoading(false);
-}
-
-// ── Goals ─────────────────────────────────────────────────────
-async function loadGoals() {
-  try {
-    const r = await fetch('/api/phases');
-    const phases = await r.json();
-    document.getElementById('phases-list').innerHTML = phases.map(p => `
-      <div class="phase-card ${p.is_current?'current':''}">
-        <div class="pc-badge ${p.is_current?'':'upcoming'}">${p.is_current?'Current Phase':'Upcoming'}</div>
-        <div class="pc-name">${p.name}</div>
-        <div class="pc-goal">${p.goal}</div>
-        <div class="pc-dates">${p.start} → ${p.end} ${p.is_current&&p.days_remaining>0?`· ${p.days_remaining} days remaining`:''}</div>
-      </div>`).join('');
-  } catch(e) { document.getElementById('phases-list').textContent = 'Error loading phases.'; }
-}
-
-// ── Workout modal ─────────────────────────────────────────────
-async function openDayWorkouts(dateStr, workouts) {
-  if (!workouts || !workouts.length) return;
-  if (workouts.length === 1 && workouts[0].activity_id) { openWorkout(workouts[0].activity_id, workouts[0].name); return; }
-  const modal = document.getElementById('workout-modal');
-  const d = new Date(dateStr);
-  document.getElementById('modal-title').textContent = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  document.getElementById('modal-meta').textContent = workouts.length + ' workouts';
-  document.getElementById('modal-stats').innerHTML = '';
-  document.getElementById('modal-zones').innerHTML = renderWorkoutRows(workouts);
-  document.getElementById('modal-pace-chart').innerHTML = '';
-  document.getElementById('modal-elev-chart').innerHTML = '';
-  modal.classList.add('open'); document.body.style.overflow = 'hidden';
-}
-
-async function openWorkout(activityId, name) {
-  const modal = document.getElementById('workout-modal');
-  document.getElementById('modal-title').textContent = name || 'Workout';
-  document.getElementById('modal-meta').textContent = 'Loading...';
-  document.getElementById('modal-stats').innerHTML = '';
-  document.getElementById('modal-zones').innerHTML = '';
-  document.getElementById('modal-pace-chart').innerHTML = '';
-  document.getElementById('modal-elev-chart').innerHTML = '';
-  modal.classList.add('open'); document.body.style.overflow = 'hidden';
-  try {
-    const r = await fetch('/api/workout/'+activityId);
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-    const act=d.activity, zones=d.zones, splits=d.splits||[], apple=d.apple;
-    document.getElementById('modal-meta').textContent = [act.date, act.sport_type, act.distance_miles?act.distance_miles.toFixed(2)+' mi':'', act.moving_time_min?Math.round(act.moving_time_min)+' min':''].filter(Boolean).join('  ·  ');
-    const stats=[];
-    if(act.distance_miles) stats.push({label:'Distance',value:act.distance_miles.toFixed(2),unit:'mi'});
-    if(act.moving_time_min) stats.push({label:'Duration',value:Math.round(act.moving_time_min),unit:'min'});
-    if(apple&&apple.avg_pace_display) stats.push({label:'Avg Pace',value:apple.avg_pace_display,unit:'/mi'});
-    if(act.avg_hr) stats.push({label:'Avg HR',value:Math.round(act.avg_hr),unit:'bpm'});
-    if(act.max_hr) stats.push({label:'Max HR',value:Math.round(act.max_hr),unit:'bpm'});
-    if(act.total_elevation_gain_m) stats.push({label:'Elevation',value:Math.round(act.total_elevation_gain_m*3.28),unit:'ft'});
-    if(act.calories) stats.push({label:'Calories',value:Math.round(act.calories),unit:'kcal'});
-    document.getElementById('modal-stats').innerHTML = stats.map(s=>`<div class="modal-stat"><div class="label">${s.label}</div><div class="value">${s.value}<span class="unit">${s.unit}</span></div></div>`).join('');
-    const zoneData = zones||(apple?{z1_min:apple.z1_min,z2_min:apple.z2_min,z3_min:apple.z3_min,z4_min:apple.z4_min,z5_min:apple.z5_min}:null);
-    if(zoneData) {
-      const zDefs=[{key:'z1_min',label:'Z1',color:'#555'},{key:'z2_min',label:'Z2',color:'#4a7c59'},{key:'z3_min',label:'Z3',color:'#c8a96e'},{key:'z4_min',label:'Z4',color:'#c07040'},{key:'z5_min',label:'Z5',color:'#a03030'}];
-      const maxZ=Math.max(...zDefs.map(z=>zoneData[z.key]||0),1);
-      document.getElementById('modal-zones').innerHTML='<div class="modal-section-title">Heart Rate Zones</div>'+zDefs.map(z=>{const val=zoneData[z.key]||0;const pct=Math.round(val/maxZ*100);return`<div class="mzone-row"><div class="mzone-label">${z.label}</div><div class="mzone-bar-wrap"><div class="mzone-bar" style="width:${pct}%;background:${z.color}"></div></div><div class="mzone-val">${Math.round(val)}m</div></div>`;}).join('');
-    }
-    if(splits.length>1){
-      const maxPace=Math.max(...splits.map(s=>s.split_pace_min_mi||0));
-      const minPace=Math.min(...splits.map(s=>s.split_pace_min_mi||999));
-      const paceRange=maxPace-minPace||1;
-      document.getElementById('modal-pace-chart').innerHTML='<div class="modal-section-title">Pace Per Mile (lower = faster)</div><div class="mini-chart">'+splits.map(s=>{const pace=s.split_pace_min_mi||0;const mins=Math.floor(pace);const secs=Math.round((pace-mins)*60);const label=`${mins}:${String(secs).padStart(2,'0')}`;const hp=pace>0?Math.round((1-(pace-minPace)/(paceRange+0.5))*100):10;const hr=s.avg_hr_bpm?` · ${Math.round(s.avg_hr_bpm)}bpm`:'';return`<div class="mini-bar-wrap" title="Mile ${s.mile}: ${label}/mi${hr}"><div class="mini-bar" style="height:${Math.max(hp,5)}%;background:#4a7c59;width:100%"></div><div class="mini-label">M${s.mile}</div></div>`;}).join('')+'</div>';
-      const maxElev=Math.max(...splits.map(s=>s.elev_gain_ft||0),1);
-      document.getElementById('modal-elev-chart').innerHTML='<div class="modal-section-title">Elevation Gain Per Mile</div><div class="mini-chart">'+splits.map(s=>{const gain=s.elev_gain_ft||0;const hp=Math.round(gain/maxElev*100);return`<div class="mini-bar-wrap" title="Mile ${s.mile}: +${Math.round(gain)}ft"><div class="mini-bar" style="height:${Math.max(hp,2)}%;background:#c8a96e;width:100%"></div><div class="mini-label">M${s.mile}</div></div>`;}).join('')+'</div>';
-    }
-  } catch(e) { document.getElementById('modal-meta').textContent='Error: '+e.message; }
-}
-
-function closeWorkoutModal() { document.getElementById('workout-modal').classList.remove('open'); document.body.style.overflow=''; }
-function closeModal(e) { if(e.target===document.getElementById('workout-modal')) closeWorkoutModal(); }
-document.addEventListener('keydown', e => { if(e.key==='Escape'){closeWorkoutModal();closeBodyCompModal();} });
-
-function renderWorkoutRows(workouts) {
-  if (!workouts||!workouts.length) return '<div style="color:var(--dim);font-size:12px">No workouts</div>';
-  const icons={Run:'🏃',Ride:'🚴',GravelRide:'🚴',VirtualRide:'🚴',Workout:'💪',Strength:'💪',Cardio:'🏋️',Walk:'🚶',Hike:'🥾'};
-  const colors={Run:'#4a7c59',Ride:'#c8a96e',GravelRide:'#c8a96e',VirtualRide:'#c8a96e',Workout:'#4a6fa5',Strength:'#4a6fa5',Cardio:'#7a4a8a',Walk:'#666',Hike:'#666'};
-  return workouts.filter(w=>w.activity_id).map(w=>{
-    const icon=icons[w.sport_type]||'⚡',color=colors[w.sport_type]||'#555';
-    const dist=w.distance_miles>0?w.distance_miles.toFixed(1)+' mi':'';
-    const dur=w.moving_time_min?Math.round(w.moving_time_min)+' min':'';
-    const hr=w.avg_hr?Math.round(w.avg_hr)+' bpm':'';
-    const meta=[dist,dur,hr].filter(Boolean).join(' · ');
-    return`<div class="workout-row" onclick="openWorkout(${w.activity_id},'${(w.name||'').replace(/'/g,"&apos;")}')">
-      <div class="wr-icon" style="background:${color}22;color:${color}">${icon}</div>
-      <div><div class="wr-name">${w.name||w.sport_type}</div><div class="wr-meta">${w.date}  ·  ${meta}</div></div>
-      <div class="wr-arrow">›</div>
-    </div>`;
-  }).join('');
-}
-
-
-// ── Nutrition tab ─────────────────────────────────────────────
-let nutritionLoaded = false;
-async function loadNutrition() {
-  if (nutritionLoaded) return;
-  nutritionLoaded = true;
-  try {
-    // Fetch last 7 days nutrition + goals in parallel
-    const [nutrResp, goalsResp] = await Promise.all([
-      fetch('/api/dashboard').then(r => r.json()),
-      fetch('/api/nutrition_goals').then(r => r.json())
-    ]);
-
-    const nutrition = nutrResp.nutrition || [];
-    const goals     = goalsResp;
-
-    // Build day-of-week grid (last 7 days)
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().slice(0, 10);
-      const [y,mo,da] = dateStr.split('-');
-      const dayLabel = new Date(+y, mo-1, +da).toLocaleDateString('en-US', {weekday:'short'});
-      const data = nutrition.find(n => n.date === dateStr);
-      days.push({ date: dateStr, label: dayLabel, isToday: i === 0, data });
-    }
-
-    const goalCal = goals.calories || 2200;
-
-    document.getElementById('nutr-day-grid').innerHTML =
-      '<div class="nutr-day-grid">' +
-      days.map(day => {
-        if (!day.data || !day.data.calories_kcal) {
-          return `<div class="nutr-day-card no-data">
-            <div class="nd-day">${day.label}</div>
-            <div class="nd-cal" style="font-size:13px">—</div>
-            <div class="nd-unit">no log</div>
-          </div>`;
-        }
-        const d = day.data;
-        const cal = Math.round(d.calories_kcal);
-        const pct = Math.min(Math.round(cal / goalCal * 100), 100);
-        const calColor = cal > goalCal * 1.1 ? '#c07040' : cal < goalCal * 0.8 ? '#a03030' : 'var(--green)';
-        return `<div class="nutr-day-card ${day.isToday ? 'today' : ''}">
-          <div class="nd-day">${day.label}</div>
-          <div class="nd-cal" style="color:${calColor}">${cal}</div>
-          <div class="nd-unit">kcal</div>
-          <div class="nd-macros">
-            <div class="nd-macro"><span class="nm-label">P</span><span class="nm-val">${Math.round(d.protein_g||0)}g</span></div>
-            <div class="nd-macro"><span class="nm-label">C</span><span class="nm-val">${Math.round(d.carbs_g||0)}g</span></div>
-            <div class="nd-macro"><span class="nm-label">F</span><span class="nm-val">${Math.round(d.fat_g||0)}g</span></div>
-          </div>
-        </div>`;
-      }).join('') + '</div>';
-
-    // Compute 7-day averages
-    const logged = nutrition.filter(n => n.calories_kcal);
-    const avgCal  = logged.length ? Math.round(logged.reduce((s,n) => s+(n.calories_kcal||0),0)/logged.length) : 0;
-    const avgPro  = logged.length ? Math.round(logged.reduce((s,n) => s+(n.protein_g||0),0)/logged.length) : 0;
-    const avgCarb = logged.length ? Math.round(logged.reduce((s,n) => s+(n.carbs_g||0),0)/logged.length) : 0;
-    const avgFat  = logged.length ? Math.round(logged.reduce((s,n) => s+(n.fat_g||0),0)/logged.length) : 0;
-
-    const macros = [
-      { label:'Calories',  actual:avgCal,  goal:goals.calories||2200,  color:'#c8a96e', unit:'kcal' },
-      { label:'Protein',   actual:avgPro,  goal:goals.protein_g||185,  color:'#4a7c59', unit:'g' },
-      { label:'Carbs',     actual:avgCarb, goal:goals.carbs_g||175,    color:'#4a6fa5', unit:'g' },
-      { label:'Fat',       actual:avgFat,  goal:goals.fat_g||65,       color:'#7a4a8a', unit:'g' },
-    ];
-
-    const maxVal = Math.max(...macros.map(m => Math.max(m.actual, m.goal)), 1);
-
-    document.getElementById('nutr-goal-bars').innerHTML =
-      macros.map(m => {
-        const actPct  = Math.round(m.actual / maxVal * 100);
-        const goalPct = Math.round(m.goal   / maxVal * 100);
-        const onTarget = m.actual >= m.goal * 0.9 && m.actual <= m.goal * 1.1;
-        const over     = m.actual > m.goal * 1.15;
-        const status   = onTarget ? '✓' : over ? '↑' : m.actual >= m.goal * 0.8 ? '~' : '';
-        const statusColor = onTarget ? 'var(--green)' : over ? '#c07040' : 'var(--dim)';
-        return `<div class="nutr-row">
-          <div class="nutr-label">${m.label}</div>
-          <div class="nutr-goal-bar-wrap">
-            <div class="nutr-goal-bar-actual" style="width:${actPct}%;background:${m.color}"></div>
-            <div class="nutr-goal-line" style="left:${goalPct}%"></div>
-          </div>
-          <div class="nutr-nums">
-            <div class="nutr-actual">${m.actual}${m.unit}</div>
-            <div class="nutr-goal-val">/ ${m.goal}${m.unit}</div>
-          </div>
-          <div class="nutr-status" style="color:${statusColor}">${status}</div>
-        </div>`;
-      }).join('');
-
-    if (goals.rationale) {
-      document.getElementById('nutr-rationale').textContent = goals.rationale;
-    }
-
-  } catch(e) {
-    document.getElementById('nutr-day-grid').textContent = 'Error loading nutrition: ' + e.message;
-  }
-}
-
-// Auto-load dashboard
-setTimeout(loadDashboard, 500);
+  document.getElementById('tab-dashboard').classList.add('active');
+  loadDashboard();
+}, 100);
 </script>
 </body>
 </html>
