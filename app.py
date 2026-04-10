@@ -79,7 +79,7 @@ KEY COACHING RULES:
 - DATA WINDOWS: You have access to the full historical dataset — all workouts, nutrition, health metrics
   and body composition ever recorded. The data provided includes all_time_monthly (every month summarized),
   all_runs, all_rides (all historical), recent_workouts (last 30 days individual), and more.
-  Use this full history to answer questions about any time period. Never say you can only see 30 days.
+  Use this full history to answer questions about any time period. Never say you can only see a limited window.
   month_to_date covers from the 1st of the current month to today ({TODAY}).
   If the month just started and month_to_date only covers a few days, say so explicitly.
 """
@@ -365,20 +365,38 @@ def chat():
             GROUP BY 1 ORDER BY 1
         """)
 
-        # Recent 30 days workouts — always included
-        fetched['recent_workouts'] = run_query("""
+        # All workouts by date — always included
+        fetched['all_workouts'] = run_query("""
             SELECT date, sport_type, name, moving_time_min, distance_miles, avg_hr, calories
             FROM workouts_strava
-            WHERE date >= CURRENT_DATE - INTERVAL '30 days'
-            ORDER BY date DESC
+            ORDER BY date DESC LIMIT 500
+        """)
+        # Top workouts by distance — for longest/best questions
+        fetched['top_runs_by_distance'] = run_query("""
+            SELECT date, name, sport_type, distance_miles, moving_time_min, avg_hr
+            FROM workouts_strava
+            WHERE sport_type = 'Run' AND distance_miles IS NOT NULL
+            ORDER BY distance_miles DESC LIMIT 10
+        """)
+        fetched['top_rides_by_distance'] = run_query("""
+            SELECT date, name, sport_type, distance_miles, moving_time_min, avg_hr
+            FROM workouts_strava
+            WHERE sport_type IN ('Ride','GravelRide','VirtualRide') AND distance_miles IS NOT NULL
+            ORDER BY distance_miles DESC LIMIT 10
         """)
 
-        # Recent health — always included
-        fetched['recent_health'] = run_query("""
+        # Full health history — always included
+        fetched['all_health'] = run_query("""
             SELECT date, resting_hr_bpm, hrv_ms, steps, active_calories_kcal
             FROM daily_health
-            WHERE date >= CURRENT_DATE - INTERVAL '30 days'
-            ORDER BY date DESC
+            ORDER BY date DESC LIMIT 365
+        """)
+
+        # Full nutrition history — always included
+        fetched['all_nutrition'] = run_query("""
+            SELECT date, calories_kcal, protein_g, carbs_g, fat_g
+            FROM daily_nutrition
+            ORDER BY date DESC LIMIT 365
         """)
 
         # ── Weekly/recent activity ────────────────────────────
@@ -419,25 +437,40 @@ def chat():
             """)
 
         # ── Cycling / rides ───────────────────────────────────
-        if any(w in q for w in ['ride', 'cycling', 'bike', 'ms150', 'ms 150', 'longest', 'miles']):
-            fetched['all_rides'] = run_query("""
+        if any(w in q for w in ['ride', 'cycling', 'bike', 'ms150', 'ms 150', 'longest', 'miles', 'furthest', 'farthest']):
+            fetched['all_rides_by_date'] = run_query("""
                 SELECT date, sport_type, name, distance_miles, moving_time_min,
                        avg_hr, calories, total_elevation_gain_m
                 FROM workouts_strava
                 WHERE sport_type IN ('Ride','GravelRide','VirtualRide')
                 ORDER BY date DESC LIMIT 200
             """)
+            fetched['all_rides_by_distance'] = run_query("""
+                SELECT date, sport_type, name, distance_miles, moving_time_min,
+                       avg_hr, calories, total_elevation_gain_m
+                FROM workouts_strava
+                WHERE sport_type IN ('Ride','GravelRide','VirtualRide')
+                ORDER BY distance_miles DESC LIMIT 20
+            """)
 
         # ── Running ───────────────────────────────────────────
         if any(w in q for w in ['run', 'pace', 'mile', 'marathon', '5k', '10k', 'half',
                                   'november', 'december', 'october', 'january', 'february',
-                                  'september', 'august', 'hill', 'split', 'training block']):
-            fetched['all_runs'] = run_query("""
+                                  'september', 'august', 'hill', 'split', 'training block',
+                                  'longest', 'furthest', 'farthest', 'best', 'fastest']):
+            fetched['all_runs_by_date'] = run_query("""
                 SELECT date, name, sport_type, distance_miles,
                        moving_time_min, avg_hr, max_hr, total_elevation_gain_m
                 FROM workouts_strava
                 WHERE sport_type = 'Run'
-                ORDER BY date DESC LIMIT 200
+                ORDER BY date DESC LIMIT 300
+            """)
+            fetched['all_runs_by_distance'] = run_query("""
+                SELECT date, name, sport_type, distance_miles,
+                       moving_time_min, avg_hr, max_hr, total_elevation_gain_m
+                FROM workouts_strava
+                WHERE sport_type = 'Run'
+                ORDER BY distance_miles DESC LIMIT 20
             """)
             fetched['runs_apple'] = run_query("""
                 SELECT date, sport_type, distance_mi, avg_pace_display,
@@ -445,7 +478,7 @@ def chat():
                        z1_min, z2_min, z3_min, z4_min, z5_min
                 FROM workouts_apple
                 WHERE sport_type ILIKE '%run%'
-                ORDER BY date DESC LIMIT 200
+                ORDER BY date DESC LIMIT 300
             """)
             if any(w in q for w in ['hill', 'split', 'mile by mile', 'pace per mile',
                                       'january 11', 'half marathon', 'jan 11']):
