@@ -878,6 +878,184 @@ def phases():
         result.append(ph)
     return jsonify(result)
 
+
+# ── API: Strength logging ─────────────────────────────────────
+@app.route('/api/exercises')
+@login_required
+def get_exercises():
+    try:
+        data = run_query("""
+            SELECT id, name, category, muscle_group
+            FROM exercises ORDER BY category, name
+        """)
+        return jsonify(data or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/exercises', methods=['POST'])
+@login_required
+def add_exercise():
+    try:
+        data = request.json
+        r = requests.post(
+            f'{SUPABASE_URL}/rest/v1/exercises',
+            headers={**sb_headers(), 'Prefer': 'return=representation'},
+            json=[{
+                'name':         data.get('name'),
+                'category':     data.get('category', ''),
+                'muscle_group': data.get('muscle_group', '')
+            }]
+        )
+        r.raise_for_status()
+        return jsonify(r.json()[0] if r.json() else {'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strength/workout', methods=['POST'])
+@login_required
+def create_workout():
+    try:
+        data = request.json
+        r = requests.post(
+            f'{SUPABASE_URL}/rest/v1/strength_workouts',
+            headers={**sb_headers(), 'Prefer': 'return=representation'},
+            json=[{
+                'date':  data.get('date', date.today().isoformat()),
+                'notes': data.get('notes', '')
+            }]
+        )
+        r.raise_for_status()
+        return jsonify(r.json()[0])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strength/workout/<int:workout_id>/complete', methods=['POST'])
+@login_required
+def complete_workout(workout_id):
+    try:
+        r = requests.patch(
+            f'{SUPABASE_URL}/rest/v1/strength_workouts?id=eq.{workout_id}',
+            headers={**sb_headers(), 'Prefer': 'return=representation'},
+            json={'completed_at': date.today().isoformat() + 'T00:00:00Z'}
+        )
+        r.raise_for_status()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strength/sets', methods=['POST'])
+@login_required
+def log_set():
+    try:
+        data = request.json
+        r = requests.post(
+            f'{SUPABASE_URL}/rest/v1/strength_sets',
+            headers={**sb_headers(), 'Prefer': 'return=representation'},
+            json=[{
+                'workout_id':  data.get('workout_id'),
+                'exercise':    data.get('exercise'),
+                'set_number':  data.get('set_number'),
+                'weight_lbs':  data.get('weight_lbs'),
+                'reps':        data.get('reps'),
+                'rpe':         data.get('rpe'),
+                'notes':       data.get('notes', '')
+            }]
+        )
+        r.raise_for_status()
+        return jsonify(r.json()[0] if r.json() else {'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strength/sets/<int:set_id>', methods=['DELETE'])
+@login_required
+def delete_set(set_id):
+    try:
+        r = requests.delete(
+            f'{SUPABASE_URL}/rest/v1/strength_sets?id=eq.{set_id}',
+            headers=sb_headers()
+        )
+        r.raise_for_status()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strength/history')
+@login_required
+def strength_history():
+    try:
+        # Recent workouts with set counts
+        workouts = run_query("""
+            SELECT w.id, w.date, w.notes, w.completed_at,
+                   COUNT(s.id) as set_count,
+                   COUNT(DISTINCT s.exercise) as exercise_count
+            FROM strength_workouts w
+            LEFT JOIN strength_sets s ON s.workout_id = w.id
+            GROUP BY w.id, w.date, w.notes, w.completed_at
+            ORDER BY w.date DESC LIMIT 20
+        """)
+        return jsonify(workouts or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strength/workout/<int:workout_id>')
+@login_required
+def get_workout(workout_id):
+    try:
+        sets = run_query(f"""
+            SELECT id, exercise, set_number, weight_lbs, reps, rpe, notes
+            FROM strength_sets
+            WHERE workout_id = {workout_id}
+            ORDER BY exercise, set_number
+        """)
+        return jsonify(sets or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strength/exercise/<path:exercise_name>')
+@login_required
+def exercise_history(exercise_name):
+    try:
+        # Last 10 sessions for this exercise with best set per session
+        history = run_query(f"""
+            SELECT w.date,
+                   s.weight_lbs,
+                   s.reps,
+                   s.set_number,
+                   MAX(s.weight_lbs) OVER (PARTITION BY w.date) as max_weight,
+                   SUM(s.reps) OVER (PARTITION BY w.date) as total_reps
+            FROM strength_sets s
+            JOIN strength_workouts w ON w.id = s.workout_id
+            WHERE s.exercise ILIKE '{exercise_name}'
+            ORDER BY w.date DESC, s.set_number
+            LIMIT 50
+        """)
+        return jsonify(history or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strength/pbs')
+@login_required
+def strength_pbs():
+    try:
+        # Personal best weight for each exercise
+        pbs = run_query("""
+            SELECT s.exercise,
+                   MAX(s.weight_lbs) as best_weight,
+                   (SELECT s2.reps FROM strength_sets s2
+                    JOIN strength_workouts w2 ON w2.id = s2.workout_id
+                    WHERE s2.exercise = s.exercise
+                    AND s2.weight_lbs = MAX(s.weight_lbs)
+                    ORDER BY w2.date DESC LIMIT 1) as reps_at_best,
+                   MAX(w.date) as last_performed
+            FROM strength_sets s
+            JOIN strength_workouts w ON w.id = s.workout_id
+            GROUP BY s.exercise
+            ORDER BY s.exercise
+        """)
+        return jsonify(pbs or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=False)
