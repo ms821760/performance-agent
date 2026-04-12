@@ -1056,6 +1056,220 @@ def strength_pbs():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+# ── API: Workout sessions (mobile form) ───────────────────────
+@app.route('/lift/session/<session_id>')
+def lift_session(session_id):
+    """Mobile workout form — no login required, uses session token."""
+    return render_template('lift.html', session_id=session_id)
+
+@app.route('/api/lift/session', methods=['POST'])
+def create_lift_session():
+    """Create a new workout session — called by Telegram bot."""
+    import secrets
+    data = request.json or {}
+    token = secrets.token_urlsafe(8)
+    r = requests.post(
+        f'{SUPABASE_URL}/rest/v1/workout_sessions',
+        headers={**sb_headers(), 'Prefer': 'return=representation'},
+        json=[{
+            'id':           token,
+            'date':         data.get('date', date.today().isoformat()),
+            'workout_type': data.get('workout_type', 'General'),
+            'status':       'active'
+        }]
+    )
+    r.raise_for_status()
+    base_url = request.host_url.rstrip('/')
+    return jsonify({'token': token, 'url': f'{base_url}/lift/session/{token}'})
+
+@app.route('/api/lift/session/<session_id>', methods=['GET'])
+def get_lift_session(session_id):
+    """Get session + all sets logged so far."""
+    try:
+        session = run_query(f"""
+            SELECT id, date, workout_type, status
+            FROM workout_sessions WHERE id = '{session_id}' LIMIT 1
+        """)
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
+
+        sets = run_query(f"""
+            SELECT s.id, s.exercise, s.section, s.set_number,
+                   s.weight_lbs, s.reps, s.duration_sec, s.height_in, s.notes,
+                   e.exercise_type, e.workout_category
+            FROM strength_sets s
+            LEFT JOIN exercises e ON e.name = s.exercise
+            WHERE s.workout_id = (
+                SELECT id FROM strength_workouts
+                WHERE date = '{session[0]['date']}'
+                ORDER BY id DESC LIMIT 1
+            )
+            ORDER BY s.exercise, s.set_number
+        """) or []
+
+        exercises = run_query("""
+            SELECT name, exercise_type, workout_category, muscle_group
+            FROM exercises ORDER BY workout_category, name
+        """) or []
+
+        # Get last session data for each exercise
+        pbs = run_query("""
+            SELECT s.exercise,
+                   MAX(s.weight_lbs) as best_weight,
+                   MAX(s.reps) as best_reps
+            FROM strength_sets s
+            GROUP BY s.exercise
+        """) or []
+
+        return jsonify({
+            'session':   session[0],
+            'sets':      sets,
+            'exercises': exercises,
+            'pbs':       {p['exercise']: p for p in pbs}
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lift/session/<session_id>/complete', methods=['POST'])
+def complete_lift_session(session_id):
+    """Mark session as complete."""
+    try:
+        # Get or create the strength_workout for this session
+        session = run_query(f"""
+            SELECT id, date, workout_type FROM workout_sessions
+            WHERE id = '{session_id}' LIMIT 1
+        """)
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
+
+        s = session[0]
+        # Update session status
+        requests.patch(
+            f'{SUPABASE_URL}/rest/v1/workout_sessions?id=eq.{session_id}',
+            headers=sb_headers(),
+            json={'status': 'completed', 'completed_at': date.today().isoformat() + 'T00:00:00Z'}
+        )
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lift/session/<session_id>/delete', methods=['POST'])
+def delete_lift_session(session_id):
+    """Delete a session and all its sets."""
+    try:
+        session = run_query(f"""
+            SELECT date FROM workout_sessions WHERE id = '{session_id}' LIMIT 1
+        """)
+        if session:
+            # Delete sets via workout
+            requests.delete(
+                f'{SUPABASE_URL}/rest/v1/workout_sessions?id=eq.{session_id}',
+                headers=sb_headers()
+            )
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lift/log', methods=['POST'])
+def log_lift_set():
+    """Log a single set — called from mobile form."""
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+
+        # Get or create strength_workout for today
+        session = run_query(f"""
+            SELECT date, workout_type FROM workout_sessions
+            WHERE id = '{session_id}' LIMIT 1
+        """)
+        if not session:
+            return jsonify({'error': 'Invalid session'}), 404
+
+        workout_date = session[0]['date']
+        workout_type = session[0]['workout_type']
+
+        # Get or create strength_workout
+        existing = run_query(f"""
+            SELECT id FROM strength_workouts
+            WHERE date = '{workout_date}'
+            ORDER BY id DESC LIMIT 1
+        """)
+        if existing:
+            workout_id = existing[0]['id']
+        else:
+            r = requests.post(
+                f'{SUPABASE_URL}/rest/v1/strength_workouts',
+                headers={**sb_headers(), 'Prefer': 'return=representation'},
+                json=[{'date': workout_date, 'notes': workout_type}]
+            )
+            r.raise_for_status()
+            workout_id = r.json()[0]['id']
+
+        # Log the set
+        row = {
+            'workout_id':   workout_id,
+            'exercise':     data.get('exercise'),
+            'section':      data.get('section', 'Main Lifts'),
+            'set_number':   data.get('set_number', 1),
+            'weight_lbs':   data.get('weight_lbs'),
+            'reps':         data.get('reps'),
+            'duration_sec': data.get('duration_sec'),
+            'height_in':    data.get('height_in'),
+            'notes':        data.get('notes', '')
+        }
+        row = {k: v for k, v in row.items() if v is not None}
+        r = requests.post(
+            f'{SUPABASE_URL}/rest/v1/strength_sets',
+            headers={**sb_headers(), 'Prefer': 'return=representation'},
+            json=[row]
+        )
+        r.raise_for_status()
+        return jsonify(r.json()[0] if r.json() else {'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lift/set/<int:set_id>', methods=['DELETE'])
+def delete_lift_set(set_id):
+    try:
+        requests.delete(
+            f'{SUPABASE_URL}/rest/v1/strength_sets?id=eq.{set_id}',
+            headers=sb_headers()
+        )
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lift/history')
+@login_required
+def lift_history():
+    try:
+        sessions = run_query("""
+            SELECT ws.id, ws.date, ws.workout_type, ws.status,
+                   COUNT(DISTINCT ss.exercise) as exercise_count,
+                   COUNT(ss.id) as set_count
+            FROM workout_sessions ws
+            LEFT JOIN strength_workouts sw ON sw.date = ws.date
+            LEFT JOIN strength_sets ss ON ss.workout_id = sw.id
+            GROUP BY ws.id, ws.date, ws.workout_type, ws.status
+            ORDER BY ws.date DESC LIMIT 30
+        """)
+        return jsonify(sessions or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/exercises/all')
+def get_all_exercises():
+    """Public endpoint — no login — for mobile form."""
+    try:
+        data = run_query("""
+            SELECT name, exercise_type, workout_category, muscle_group
+            FROM exercises ORDER BY workout_category, name
+        """)
+        return jsonify(data or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=False)
