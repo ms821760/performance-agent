@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Workout Logger</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --gold: #c8a96e; --green: #4a7c59; --blue: #4a6fa5; --purple: #7a4a8a;
+  --red: #a03030; --bg: #0a0a0a; --bg2: #0d0d0d; --bg3: #141414;
+  --border: #1e1e1e; --text: #e8e4d9; --muted: #888; --dim: #444;
+}
+body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; padding-bottom:100px; }
+
+/* Header */
+#header { background:var(--bg2); border-bottom:1px solid var(--border); padding:14px 16px; position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; }
+#header h1 { font-size:16px; font-weight:600; }
+#header .workout-type { font-size:12px; color:var(--gold); margin-top:2px; }
+#timer { font-size:13px; color:var(--dim); font-variant-numeric:tabular-nums; }
+
+/* Sections */
+.section { margin:12px 12px 0; }
+.section-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:8px 8px 0 0; cursor:pointer; }
+.section-header .section-name { font-size:13px; font-weight:600; letter-spacing:.05em; }
+.section-header .section-count { font-size:11px; color:var(--dim); }
+.section-header .chevron { font-size:12px; color:var(--dim); transition:transform .2s; }
+.section-header.collapsed .chevron { transform:rotate(-90deg); }
+.section-body { border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px; overflow:hidden; }
+.section-body.hidden { display:none; }
+
+/* Exercise blocks */
+.exercise-block { border-bottom:1px solid var(--border); }
+.exercise-block:last-child { border-bottom:none; }
+.ex-header { display:flex; align-items:center; padding:10px 14px; background:var(--bg2); gap:10px; }
+.ex-name { font-size:14px; font-weight:500; flex:1; }
+.ex-type-badge { font-size:10px; color:var(--dim); background:var(--bg3); border:1px solid var(--border); border-radius:3px; padding:2px 6px; white-space:nowrap; }
+.ex-pb { font-size:11px; color:var(--gold); }
+.ex-delete { background:none; border:none; color:var(--dim); font-size:16px; cursor:pointer; padding:4px; }
+
+/* Sets table */
+.sets-wrap { padding:0 14px 10px; background:var(--bg2); }
+.sets-table { width:100%; border-collapse:collapse; }
+.sets-table th { font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; padding:6px 4px; text-align:center; border-bottom:1px solid var(--border); }
+.sets-table td { padding:6px 4px; text-align:center; vertical-align:middle; }
+.set-num { font-size:12px; color:var(--dim); width:28px; }
+.set-input { background:var(--bg3); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:15px; width:100%; padding:8px 4px; text-align:center; outline:none; -webkit-appearance:none; }
+.set-input:focus { border-color:var(--gold); }
+.set-done-btn { width:32px; height:32px; border-radius:50%; border:2px solid var(--border); background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; transition:all .15s; margin:0 auto; }
+.set-done-btn.saved { background:var(--green); border-color:var(--green); }
+.set-del { background:none; border:none; color:var(--dim); font-size:16px; cursor:pointer; padding:4px; }
+.add-set-btn { width:100%; padding:9px; background:none; border:1px dashed var(--border); border-radius:6px; color:var(--dim); font-size:13px; cursor:pointer; margin-top:8px; transition:all .15s; }
+.add-set-btn:active { background:var(--bg3); }
+
+/* Add exercise */
+.add-ex-btn { width:100%; padding:12px; background:none; border:1px dashed var(--border); color:var(--gold); font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+.add-ex-btn:active { background:var(--bg3); }
+
+/* Bottom bar */
+#bottom-bar { position:fixed; bottom:0; left:0; right:0; background:var(--bg2); border-top:1px solid var(--border); padding:12px 16px; display:flex; gap:10px; }
+.btn { flex:1; padding:14px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; }
+.btn-finish { background:var(--green); color:#fff; }
+.btn-cancel { background:var(--bg3); border:1px solid var(--border); color:var(--dim); flex:0 0 80px; }
+.btn:active { opacity:.8; }
+
+/* Exercise picker modal */
+#picker { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.85); flex-direction:column; }
+#picker.open { display:flex; align-items:flex-end; }
+#picker-box { background:var(--bg2); border-radius:16px 16px 0 0; width:100%; max-height:85vh; display:flex; flex-direction:column; }
+#picker-header { padding:16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+#picker-header h2 { font-size:16px; }
+#picker-close { background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1; }
+#picker-search { margin:12px 16px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:16px; padding:10px 14px; outline:none; }
+#picker-list { overflow-y:auto; flex:1; padding:0 0 20px; }
+.picker-cat { font-size:11px; color:var(--dim); letter-spacing:.1em; text-transform:uppercase; padding:12px 16px 6px; }
+.picker-item { display:flex; align-items:center; padding:13px 16px; cursor:pointer; border-bottom:1px solid #111; }
+.picker-item:active { background:var(--bg3); }
+.picker-item-info { flex:1; }
+.picker-item-name { font-size:15px; }
+.picker-item-meta { font-size:11px; color:var(--dim); margin-top:2px; }
+.picker-item-pb { font-size:12px; color:var(--gold); }
+.picker-new { padding:14px 16px; border-top:1px solid var(--border); display:flex; gap:10px; }
+.picker-new input { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:15px; padding:10px 12px; outline:none; }
+.picker-new button { background:var(--gold); border:none; color:var(--bg); border-radius:8px; padding:10px 16px; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; }
+
+/* Toast */
+#toast { position:fixed; top:70px; left:50%; transform:translateX(-50%); background:#222; border:1px solid var(--border); border-radius:8px; padding:10px 18px; font-size:13px; display:none; z-index:200; white-space:nowrap; }
+#toast.show { display:block; }
+
+/* Loading */
+#loading { display:flex; align-items:center; justify-content:center; height:60vh; flex-direction:column; gap:12px; color:var(--dim); font-size:14px; }
+.spinner { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <div id="header-title">Loading...</div>
+    <div class="workout-type" id="header-type"></div>
+  </div>
+  <div id="timer">0:00</div>
+</div>
+
+<div id="main">
+  <div id="loading"><div class="spinner"></div>Loading workout...</div>
+</div>
+
+<div id="bottom-bar" style="display:none">
+  <button class="btn btn-cancel" onclick="cancelWorkout()">Cancel</button>
+  <button class="btn btn-finish" onclick="finishWorkout()">✓ Finish Workout</button>
+</div>
+
+<!-- Exercise picker -->
+<div id="picker" onclick="if(event.target===this)closePicker()">
+  <div id="picker-box">
+    <div id="picker-header">
+      <h2>Add Exercise</h2>
+      <button id="picker-close" onclick="closePicker()">✕</button>
+    </div>
+    <input id="picker-search" type="search" placeholder="Search exercises..." oninput="filterPicker(this.value)">
+    <div id="picker-list"></div>
+    <div class="picker-new">
+      <input id="new-ex-input" placeholder="Add custom exercise...">
+      <button onclick="addCustomExercise()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SESSION_ID = '{{ session_id }}';
+const BASE_URL = window.location.origin;
+
+let session = null;
+let exercises = [];
+let pbs = {};
+let workoutData = {}; // { section: { exerciseName: [sets] } }
+let currentSection = null;
+let startTime = Date.now();
+let savedSetIds = {}; // setKey -> db id
+
+const SECTIONS = ['Warmup', 'Main Lifts', 'Accessory', 'Cooldown'];
+const WORKOUT_EXERCISES = {
+  'Upper Body Push': ['Bench Press','Dumbbell Press','Incline Press','Decline Press','Flies','Peck Deck','Military Press','Lateral Raises','Tricep Pushdowns','Dips','Push-ups'],
+  'Upper Body Pull': ['Pull-ups','Lat Pulldowns','Face Pulls','UR Rows','T-Bar Row','Barbell Curls','Dumbbell Curls'],
+  'Legs':            ['Back Squats','Front Squats','Deadlift','Romanian Squats','Leg Extensions','Leg Curls','Lunges','Air Squats'],
+  'Core / Cardio':   ['Box Jumps','Step Ups','Ball Pass','Mountain Climbers','Swimmers','Sit-ups','Leg Lifts','Ab Roller','Push-ups'],
+  'Full Body':       [],
+  'General':         []
+};
+
+// Timer
+setInterval(() => {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const m = Math.floor(elapsed / 60), s = elapsed % 60;
+  document.getElementById('timer').textContent = `${m}:${String(s).padStart(2,'0')}`;
+}, 1000);
+
+async function init() {
+  try {
+    const r = await fetch(`${BASE_URL}/api/lift/session/${SESSION_ID}`);
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    session   = data.session;
+    exercises = data.exercises;
+    pbs       = data.pbs || {};
+
+    document.getElementById('header-title').textContent = session.date;
+    document.getElementById('header-type').textContent  = session.workout_type;
+    document.title = session.workout_type + ' — Workout';
+
+    // Init empty sections
+    SECTIONS.forEach(s => { workoutData[s] = {}; });
+
+    // Load any existing sets
+    (data.sets || []).forEach(s => {
+      const sec = s.section || 'Main Lifts';
+      if (!workoutData[sec]) workoutData[sec] = {};
+      if (!workoutData[sec][s.exercise]) workoutData[sec][s.exercise] = [];
+      workoutData[sec][s.exercise].push({
+        set_number: s.set_number, weight: s.weight_lbs,
+        reps: s.reps, duration: s.duration_sec, height: s.height_in,
+        saved: true, id: s.id
+      });
+      const key = `${sec}__${s.exercise}__${s.set_number}`;
+      savedSetIds[key] = s.id;
+    });
+
+    render();
+    document.getElementById('bottom-bar').style.display = 'flex';
+  } catch(e) {
+    document.getElementById('main').innerHTML = `<div style="padding:20px;color:var(--red)">Error: ${e.message}</div>`;
+  }
+}
+
+function getExType(name) {
+  const ex = exercises.find(e => e.name === name);
+  return ex ? ex.exercise_type : 'weighted';
+}
+
+function getPB(name) {
+  const p = pbs[name];
+  if (!p) return '';
+  if (p.best_weight) return `Last: ${p.best_weight}lbs × ${p.best_reps}`;
+  if (p.best_reps)   return `Last: ${p.best_reps} reps`;
+  return '';
+}
+
+function render() {
+  const main = document.getElementById('main');
+  let html = '';
+
+  SECTIONS.forEach(sec => {
+    const exNames = Object.keys(workoutData[sec] || {});
+    const setCount = exNames.reduce((t, n) => t + (workoutData[sec][n] || []).length, 0);
+    html += `
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)" data-section="${sec}">
+          <span class="section-name">${sec}</span>
+          <span class="section-count">${exNames.length} exercises · ${setCount} sets</span>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="section-body" id="section-${sec.replace(/\s/g,'_')}">
+          ${exNames.map(exName => renderExBlock(sec, exName)).join('')}
+          <button class="add-ex-btn" onclick="openPicker('${sec}')">
+            + Add Exercise
+          </button>
+        </div>
+      </div>`;
+  });
+
+  main.innerHTML = html;
+}
+
+function renderExBlock(sec, exName) {
+  const type = getExType(exName);
+  const sets = workoutData[sec][exName] || [];
+  const pb   = getPB(exName);
+
+  let headers = '<th class="set-num">#</th>';
+  if (type === 'weighted') headers += '<th>Weight</th><th>Reps</th>';
+  else if (type === 'bodyweight') headers += '<th>Reps</th>';
+  else if (type === 'timed') headers += '<th>Sec</th>';
+  headers += '<th></th><th></th>';
+
+  const rows = sets.map((s, i) => {
+    const key = `${sec}__${exName}__${s.set_number}`;
+    const saved = s.saved || savedSetIds[key];
+    let inputs = '';
+    if (type === 'weighted') {
+      inputs = `
+        <td><input class="set-input" type="number" inputmode="decimal" placeholder="lbs"
+          value="${s.weight||''}" onchange="updateSet('${sec}','${exName}',${i},'weight',this.value)"></td>
+        <td><input class="set-input" type="number" inputmode="numeric" placeholder="reps"
+          value="${s.reps||''}" onchange="updateSet('${sec}','${exName}',${i},'reps',this.value)"></td>`;
+    } else if (type === 'bodyweight') {
+      inputs = `<td><input class="set-input" type="number" inputmode="numeric" placeholder="reps"
+        value="${s.reps||''}" onchange="updateSet('${sec}','${exName}',${i},'reps',this.value)"></td>`;
+    } else {
+      inputs = `<td><input class="set-input" type="number" inputmode="numeric" placeholder="sec"
+        value="${s.duration||''}" onchange="updateSet('${sec}','${exName}',${i},'duration',this.value)"></td>`;
+    }
+    return `<tr id="set-row-${sec.replace(/\s/g,'_')}-${exName.replace(/\s/g,'_')}-${i}">
+      <td class="set-num">${s.set_number}</td>
+      ${inputs}
+      <td><button class="set-done-btn ${saved?'saved':''}" onclick="saveSet('${sec}','${exName}',${i})">${saved?'✓':''}</button></td>
+      <td><button class="set-del" onclick="deleteSet('${sec}','${exName}',${i})">×</button></td>
+    </tr>`;
+  }).join('');
+
+  const typeBadge = type === 'weighted' ? 'Weight + Reps' : type === 'bodyweight' ? 'Bodyweight' : 'Timed';
+
+  return `<div class="exercise-block">
+    <div class="ex-header">
+      <div style="flex:1">
+        <div class="ex-name">${exName}</div>
+        ${pb ? `<div class="ex-pb">${pb}</div>` : ''}
+      </div>
+      <span class="ex-type-badge">${typeBadge}</span>
+      <button class="ex-delete" onclick="removeExercise('${sec}','${exName}')">🗑</button>
+    </div>
+    <div class="sets-wrap">
+      <table class="sets-table">
+        <thead><tr>${headers}</tr></thead>
+        <tbody id="sets-${sec.replace(/\s/g,'_')}-${exName.replace(/\s/g,'_')}">${rows}</tbody>
+      </table>
+      <button class="add-set-btn" onclick="addSet('${sec}','${exName}')">+ Add Set</button>
+    </div>
+  </div>`;
+}
+
+function toggleSection(el) {
+  el.classList.toggle('collapsed');
+  const bodyId = 'section-' + el.dataset.section.replace(/\s/g,'_');
+  document.getElementById(bodyId).classList.toggle('hidden');
+}
+
+function updateSet(sec, exName, idx, field, value) {
+  if (!workoutData[sec][exName]) return;
+  const s = workoutData[sec][exName][idx];
+  if (field === 'weight')   s.weight   = parseFloat(value) || null;
+  if (field === 'reps')     s.reps     = parseInt(value) || null;
+  if (field === 'duration') s.duration = parseInt(value) || null;
+  s.saved = false;
+  const key = `${sec}__${exName}__${s.set_number}`;
+  delete savedSetIds[key];
+  const btn = document.querySelector(`#set-row-${sec.replace(/\s/g,'_')}-${exName.replace(/\s/g,'_')}-${idx} .set-done-btn`);
+  if (btn) { btn.classList.remove('saved'); btn.textContent = ''; }
+}
+
+async function saveSet(sec, exName, idx) {
+  const s = workoutData[sec][exName][idx];
+  const type = getExType(exName);
+
+  if (type === 'weighted' && !s.weight && !s.reps) { showToast('Enter weight and reps first'); return; }
+  if (type === 'bodyweight' && !s.reps) { showToast('Enter reps first'); return; }
+  if (type === 'timed' && !s.duration) { showToast('Enter duration first'); return; }
+
+  try {
+    const body = {
+      session_id:   SESSION_ID,
+      exercise:     exName,
+      section:      sec,
+      set_number:   s.set_number,
+      weight_lbs:   s.weight || undefined,
+      reps:         s.reps || undefined,
+      duration_sec: s.duration || undefined,
+    };
+    const r = await fetch(`${BASE_URL}/api/lift/log`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    s.saved = true;
+    s.id = data.id;
+    const key = `${sec}__${exName}__${s.set_number}`;
+    savedSetIds[key] = data.id;
+    const btn = document.querySelector(`#set-row-${sec.replace(/\s/g,'_')}-${exName.replace(/\s/g,'_')}-${idx} .set-done-btn`);
+    if (btn) { btn.classList.add('saved'); btn.textContent = '✓'; }
+    showToast('Set saved ✓');
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+async function deleteSet(sec, exName, idx) {
+  const s = workoutData[sec][exName][idx];
+  if (s.id) {
+    try { await fetch(`${BASE_URL}/api/lift/set/${s.id}`, {method:'DELETE'}); } catch(e) {}
+  }
+  workoutData[sec][exName].splice(idx, 1);
+  // Renumber
+  workoutData[sec][exName].forEach((s, i) => s.set_number = i + 1);
+  renderExerciseBlock(sec, exName);
+}
+
+function addSet(sec, exName) {
+  const sets = workoutData[sec][exName];
+  const last = sets[sets.length - 1] || {};
+  sets.push({ set_number: sets.length + 1, weight: last.weight, reps: last.reps, duration: null, saved: false });
+  renderExerciseBlock(sec, exName);
+}
+
+function removeExercise(sec, exName) {
+  if (!confirm(`Remove ${exName}?`)) return;
+  delete workoutData[sec][exName];
+  render();
+}
+
+function renderExerciseBlock(sec, exName) {
+  const container = document.getElementById(`sets-${sec.replace(/\s/g,'_')}-${exName.replace(/\s/g,'_')}`);
+  const block = container?.closest('.exercise-block');
+  if (block) {
+    const newBlock = document.createElement('div');
+    newBlock.innerHTML = renderExBlock(sec, exName);
+    block.replaceWith(newBlock.firstChild);
+  }
+}
+
+// ── Exercise Picker ───────────────────────────────────────────
+let pickerSection = null;
+
+function openPicker(sec) {
+  pickerSection = sec;
+  document.getElementById('picker').classList.add('open');
+  document.getElementById('picker-search').value = '';
+  filterPicker('');
+  setTimeout(() => document.getElementById('picker-search').focus(), 100);
+}
+
+function closePicker() {
+  document.getElementById('picker').classList.remove('open');
+}
+
+function filterPicker(query) {
+  const q = query.toLowerCase();
+  const workoutType = session?.workout_type || '';
+  const priorityList = WORKOUT_EXERCISES[workoutType] || [];
+
+  // Group exercises
+  const byCategory = {};
+  exercises.forEach(ex => {
+    if (q && !ex.name.toLowerCase().includes(q)) return;
+    const cat = ex.workout_category || 'Other';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(ex);
+  });
+
+  // Sort categories — put workout type first
+  const cats = Object.keys(byCategory).sort((a, b) => {
+    if (a === workoutType) return -1;
+    if (b === workoutType) return 1;
+    return a.localeCompare(b);
+  });
+
+  const list = document.getElementById('picker-list');
+  list.innerHTML = cats.map(cat => {
+    const items = byCategory[cat].map(ex => {
+      const pb = getPB(ex.name);
+      const typeLabel = ex.exercise_type === 'weighted' ? 'Weight + Reps' : ex.exercise_type === 'bodyweight' ? 'Bodyweight' : 'Timed';
+      return `<div class="picker-item" onclick="selectExercise('${ex.name.replace(/'/g,"\\'")}')">
+        <div class="picker-item-info">
+          <div class="picker-item-name">${ex.name}</div>
+          <div class="picker-item-meta">${typeLabel} · ${ex.muscle_group || ''}</div>
+        </div>
+        ${pb ? `<div class="picker-item-pb">${pb}</div>` : ''}
+      </div>`;
+    }).join('');
+    return `<div class="picker-cat">${cat}</div>${items}`;
+  }).join('');
+}
+
+function selectExercise(name) {
+  if (!workoutData[pickerSection]) workoutData[pickerSection] = {};
+  if (workoutData[pickerSection][name]) { showToast(`${name} already added`); closePicker(); return; }
+  workoutData[pickerSection][name] = [{ set_number: 1, weight: null, reps: null, duration: null, saved: false }];
+  closePicker();
+  render();
+  // Scroll to the new exercise
+  setTimeout(() => {
+    const sec = document.getElementById('section-' + pickerSection.replace(/\s/g,'_'));
+    if (sec) sec.scrollIntoView({behavior:'smooth', block:'end'});
+  }, 100);
+}
+
+async function addCustomExercise() {
+  const name = document.getElementById('new-ex-input').value.trim();
+  if (!name) return;
+  try {
+    await fetch(`${BASE_URL}/api/exercises`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name, category:'Other', muscle_group:''})
+    });
+    exercises.push({name, exercise_type:'weighted', workout_category:'Other', muscle_group:''});
+    document.getElementById('new-ex-input').value = '';
+    selectExercise(name);
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+// ── Finish / Cancel ───────────────────────────────────────────
+async function finishWorkout() {
+  const unsavedCount = Object.values(workoutData).reduce((total, secData) => {
+    return total + Object.values(secData).reduce((t, sets) => {
+      return t + sets.filter(s => !s.saved).length;
+    }, 0);
+  }, 0);
+
+  if (unsavedCount > 0) {
+    if (!confirm(`${unsavedCount} set(s) not saved yet. Save and finish?`)) return;
+    // Save all unsaved sets
+    for (const [sec, secData] of Object.entries(workoutData)) {
+      for (const [exName, sets] of Object.entries(secData)) {
+        for (let i = 0; i < sets.length; i++) {
+          if (!sets[i].saved) await saveSet(sec, exName, i);
+        }
+      }
+    }
+  }
+
+  try {
+    await fetch(`${BASE_URL}/api/lift/session/${SESSION_ID}/complete`, {method:'POST'});
+    document.getElementById('main').innerHTML = `
+      <div style="padding:40px 20px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">💪</div>
+        <div style="font-size:20px;font-weight:600;margin-bottom:8px">Workout Complete!</div>
+        <div style="font-size:14px;color:var(--muted)">Great session. Data saved.</div>
+        <div style="margin-top:24px;font-size:13px;color:var(--dim)">You can close this window.</div>
+      </div>`;
+    document.getElementById('bottom-bar').style.display = 'none';
+  } catch(e) { showToast('Error finishing: ' + e.message); }
+}
+
+async function cancelWorkout() {
+  if (!confirm('Cancel this workout? Saved sets will be kept.')) return;
+  await fetch(`${BASE_URL}/api/lift/session/${SESSION_ID}/delete`, {method:'POST'});
+  document.getElementById('main').innerHTML = `<div style="padding:40px;text-align:center;color:var(--dim)">Workout cancelled.</div>`;
+  document.getElementById('bottom-bar').style.display = 'none';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+init();
+</script>
+</body>
+</html>
