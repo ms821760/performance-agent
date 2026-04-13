@@ -63,6 +63,19 @@ body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkM
 .btn-cancel { background:var(--bg3); border:1px solid var(--border); color:var(--dim); flex:0 0 80px; }
 .btn:active { opacity:.8; }
 
+
+.cardio-wrap { padding:14px; }
+.cardio-label { font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; padding:0 0 8px; }
+.cardio-opts { display:flex; flex-wrap:wrap; gap:8px; padding:0 0 4px; }
+.cardio-opt { padding:8px 14px; border-radius:20px; border:1px solid var(--border); background:var(--bg3); color:var(--muted); font-size:13px; cursor:pointer; transition:all .15s; }
+.cardio-opt.selected { background:var(--gold); border-color:var(--gold); color:var(--bg); font-weight:600; }
+.stretch-grid { padding:8px 14px 14px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.stretch-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all .15s; }
+.stretch-item.checked { background:#0f1a0f; border-color:var(--green); }
+.stretch-check { width:22px; height:22px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+.stretch-item.checked .stretch-check { background:var(--green); border-color:var(--green); color:#fff; }
+.stretch-name { font-size:12px; line-height:1.3; }
+
 /* Exercise picker modal */
 #picker { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.85); flex-direction:column; }
 #picker.open { display:flex; align-items:flex-end; }
@@ -121,9 +134,19 @@ body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkM
     </div>
     <input id="picker-search" type="search" placeholder="Search exercises..." oninput="filterPicker(this.value)">
     <div id="picker-list"></div>
-    <div class="picker-new">
-      <input id="new-ex-input" placeholder="Add custom exercise...">
-      <button onclick="addCustomExercise()">Add</button>
+    <div class="picker-new" style="flex-direction:column;gap:8px">
+      <div style="display:flex;gap:8px">
+        <input id="new-ex-input" placeholder="Custom exercise name..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px;outline:none">
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;color:var(--dim);white-space:nowrap">Type:</span>
+        <select id="new-ex-type" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:8px 10px;outline:none">
+          <option value="weighted">Weight + Reps</option>
+          <option value="bodyweight">Bodyweight (Reps)</option>
+          <option value="timed">Timed (Seconds)</option>
+        </select>
+        <button onclick="addCustomExercise()" style="background:var(--gold);border:none;color:var(--bg);border-radius:8px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">Save & Add</button>
+      </div>
     </div>
   </div>
 </div>
@@ -140,9 +163,18 @@ let pbs = {};
 let workoutData = {}; // { section: { exerciseName: [sets] } }
 let currentSection = null;
 let startTime = Date.now();
+let cardioData = {Warmup:{}, Cooldown:{}};
+let stretchData = new Set();
 let savedSetIds = {}; // setKey -> db id
 
-const SECTIONS = ['Warmup', 'Main Lifts', 'Accessory', 'Cooldown'];
+const SECTIONS = ['Warmup', 'Main Lifts', 'Accessory', 'Cooldown', 'Stretching'];
+const CARDIO_OPTIONS = ['Stair Stepper','Treadmill','Elliptical','Bike','Walk','Other','None'];
+const INTENSITIES = ['Easy','Moderate','Hard'];
+const STRETCHES = [
+  'Hamstring Stretch','Quad Stretch','Hip Flexor Stretch','Chest Stretch',
+  'Shoulder Cross-Body Stretch','Tricep Stretch','Lat Stretch','Child's Pose',
+  'Downward Dog','Figure Four','Neck Rolls','Foam Roller'
+];
 const WORKOUT_EXERCISES = {
   'Upper Body Push': ['Bench Press','Dumbbell Press','Incline Press','Decline Press','Flies','Peck Deck','Military Press','Lateral Raises','Tricep Pushdowns','Dips','Push-ups'],
   'Upper Body Pull': ['Pull-ups','Lat Pulldowns','Face Pulls','UR Rows','T-Bar Row','Barbell Curls','Dumbbell Curls'],
@@ -209,27 +241,89 @@ function getPB(name) {
   return '';
 }
 
+
+function renderCardioSection(sec) {
+  const d = cardioData[sec] || {};
+  const secId = sec.replace(/\s/g,'_');
+  const typeOptions = CARDIO_OPTIONS.map(o =>
+    `<button class="cardio-opt ${d.type===o?'selected':''}" onclick="setCardio('${sec}','type','${o}')">${o}</button>`
+  ).join('');
+  const intOptions = INTENSITIES.map(o =>
+    `<button class="cardio-opt ${d.intensity===o?'selected':''}" onclick="setCardio('${sec}','intensity','${o}')">${o}</button>`
+  ).join('');
+  const summary = d.type && d.type !== 'None' ? `${d.type}${d.minutes?' · '+d.minutes+'min':''}${d.intensity?' · '+d.intensity:''}` : 'Not set';
+  return `<div class="section">
+    <div class="section-header" onclick="toggleSection(this)" data-section="${sec}">
+      <span class="section-name">${sec}</span>
+      <span class="section-count">${summary}</span>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body" id="section-${secId}">
+      <div class="cardio-wrap">
+        <div class="cardio-label">Type</div>
+        <div class="cardio-opts">${typeOptions}</div>
+        <div class="cardio-label" style="margin-top:12px">Duration</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 14px">
+          <input class="set-input" type="number" inputmode="numeric" placeholder="minutes"
+            value="${d.minutes||''}" style="max-width:120px"
+            onchange="setCardio('${sec}','minutes',this.value)">
+          <span style="color:var(--dim);font-size:13px">min</span>
+        </div>
+        <div class="cardio-label" style="margin-top:12px">Intensity</div>
+        <div class="cardio-opts">${intOptions}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderStretchSection() {
+  const done = stretchData || new Set();
+  const items = STRETCHES.map(s =>
+    `<div class="stretch-item ${done.has(s)?'checked':''}" onclick="toggleStretch('${s}')">
+      <div class="stretch-check">${done.has(s)?'✓':''}</div>
+      <div class="stretch-name">${s}</div>
+    </div>`
+  ).join('');
+  const count = done.size;
+  return `<div class="section">
+    <div class="section-header" onclick="toggleSection(this)" data-section="Stretching">
+      <span class="section-name">Stretching</span>
+      <span class="section-count">${count} stretches</span>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body" id="section-Stretching">
+      <div class="stretch-grid">${items}</div>
+    </div>
+  </div>`;
+}
+
 function render() {
   const main = document.getElementById('main');
   let html = '';
 
   SECTIONS.forEach(sec => {
-    const exNames = Object.keys(workoutData[sec] || {});
-    const setCount = exNames.reduce((t, n) => t + (workoutData[sec][n] || []).length, 0);
-    html += `
-      <div class="section">
-        <div class="section-header" onclick="toggleSection(this)" data-section="${sec}">
-          <span class="section-name">${sec}</span>
-          <span class="section-count">${exNames.length} exercises · ${setCount} sets</span>
-          <span class="chevron">▾</span>
-        </div>
-        <div class="section-body" id="section-${sec.replace(/\s/g,'_')}">
-          ${exNames.map(exName => renderExBlock(sec, exName)).join('')}
-          <button class="add-ex-btn" onclick="openPicker('${sec}')">
-            + Add Exercise
-          </button>
-        </div>
-      </div>`;
+    if (sec === 'Warmup' || sec === 'Cooldown') {
+      html += renderCardioSection(sec);
+    } else if (sec === 'Stretching') {
+      html += renderStretchSection();
+    } else {
+      const exNames = Object.keys(workoutData[sec] || {});
+      const setCount = exNames.reduce((t, n) => t + (workoutData[sec][n] || []).length, 0);
+      html += `
+        <div class="section">
+          <div class="section-header" onclick="toggleSection(this)" data-section="${sec}">
+            <span class="section-name">${sec}</span>
+            <span class="section-count">${exNames.length} exercises · ${setCount} sets</span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="section-body" id="section-${sec.replace(/\s/g,'_')}">
+            ${exNames.map(exName => renderExBlock(sec, exName)).join('')}
+            <button class="add-ex-btn" onclick="openPicker('${sec}')">
+              + Add Exercise
+            </button>
+          </div>
+        </div>`;
+    }
   });
 
   main.innerHTML = html;
@@ -290,6 +384,30 @@ function renderExBlock(sec, exName) {
       <button class="add-set-btn" onclick="addSet('${sec}','${exName}')">+ Add Set</button>
     </div>
   </div>`;
+}
+
+
+function setCardio(sec, field, value) {
+  if (!cardioData[sec]) cardioData[sec] = {};
+  cardioData[sec][field] = field === 'minutes' ? (parseInt(value)||null) : value;
+  render();
+}
+
+function toggleStretch(name) {
+  if (stretchData.has(name)) stretchData.delete(name);
+  else stretchData.add(name);
+  // Re-render just the stretch section
+  const sec = document.getElementById('section-Stretching');
+  if (sec) {
+    const items = STRETCHES.map(s =>
+      `<div class="stretch-item ${stretchData.has(s)?'checked':''}" onclick="toggleStretch('${s}')">
+        <div class="stretch-check">${stretchData.has(s)?'✓':''}</div>
+        <div class="stretch-name">${s}</div>
+      </div>`
+    ).join('');
+    sec.querySelector('.stretch-grid').innerHTML = items;
+    sec.previousElementSibling.querySelector('.section-count').textContent = stretchData.size + ' stretches';
+  }
 }
 
 function toggleSection(el) {
@@ -448,15 +566,17 @@ function selectExercise(name) {
 
 async function addCustomExercise() {
   const name = document.getElementById('new-ex-input').value.trim();
+  const type = document.getElementById('new-ex-type').value;
   if (!name) return;
   try {
     await fetch(`${BASE_URL}/api/exercises`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({name, category:'Other', muscle_group:''})
+      body: JSON.stringify({name, category:'Other', muscle_group:'', exercise_type: type})
     });
-    exercises.push({name, exercise_type:'weighted', workout_category:'Other', muscle_group:''});
+    exercises.push({name, exercise_type: type, workout_category:'Other', muscle_group:''});
     document.getElementById('new-ex-input').value = '';
+    showToast(`${name} saved to library ✓`);
     selectExercise(name);
   } catch(e) { showToast('Error: ' + e.message); }
 }
@@ -481,6 +601,42 @@ async function finishWorkout() {
     }
   }
 
+  // Save cardio warmup/cooldown as sets
+  for (const sec of ['Warmup', 'Cooldown']) {
+    const d = cardioData[sec];
+    if (d.type && d.type !== 'None' && d.minutes) {
+      try {
+        await fetch(`${BASE_URL}/api/lift/log`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            session_id: SESSION_ID,
+            exercise: d.type,
+            section: sec,
+            set_number: 1,
+            duration_sec: d.minutes * 60,
+            notes: d.intensity || ''
+          })
+        });
+      } catch(e) { console.error('Cardio save error:', e); }
+    }
+  }
+  // Save stretches
+  for (const stretch of stretchData) {
+    try {
+      await fetch(`${BASE_URL}/api/lift/log`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          session_id: SESSION_ID,
+          exercise: stretch,
+          section: 'Stretching',
+          set_number: 1,
+          reps: 1
+        })
+      });
+    } catch(e) { console.error('Stretch save error:', e); }
+  }
   try {
     await fetch(`${BASE_URL}/api/lift/session/${SESSION_ID}/complete`, {method:'POST'});
     document.getElementById('main').innerHTML = `
