@@ -901,9 +901,11 @@ def add_exercise():
             f'{SUPABASE_URL}/rest/v1/exercises',
             headers={**sb_headers(), 'Prefer': 'return=representation'},
             json=[{
-                'name':         data.get('name'),
-                'category':     data.get('category', ''),
-                'muscle_group': data.get('muscle_group', '')
+                'name':          data.get('name'),
+                'category':      data.get('category', ''),
+                'muscle_group':  data.get('muscle_group', ''),
+                'exercise_type': data.get('exercise_type', 'weighted'),
+                'workout_category': data.get('workout_category', 'Other')
             }]
         )
         r.raise_for_status()
@@ -1255,6 +1257,24 @@ def lift_history():
             ORDER BY ws.date DESC LIMIT 30
         """)
         return jsonify(sessions or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/strength/workout/<int:workout_id>', methods=['DELETE'])
+@login_required
+def delete_workout(workout_id):
+    try:
+        # Delete sets first (cascade should handle it but be explicit)
+        requests.delete(
+            f'{SUPABASE_URL}/rest/v1/strength_sets?workout_id=eq.{workout_id}',
+            headers=sb_headers()
+        )
+        requests.delete(
+            f'{SUPABASE_URL}/rest/v1/strength_workouts?id=eq.{workout_id}',
+            headers=sb_headers()
+        )
+        return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
