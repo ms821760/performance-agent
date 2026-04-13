@@ -1156,7 +1156,7 @@ async function loadLiftTab() {
 
 async function fetchExercises() {
   try {
-    const r = await fetch('/api/exercises');
+    const r = await fetch('/api/exercises/all');
     liftState.allExercises = await r.json();
   } catch(e) { console.error(e); }
 }
@@ -1182,6 +1182,14 @@ function showLiftHome() {
   loadLiftHistory();
 }
 
+async function deleteStrengthWorkout(workoutId) {
+  if (!confirm('Delete this workout and all its sets?')) return;
+  try {
+    await fetch('/api/strength/workout/' + workoutId, {method:'DELETE'});
+    loadLiftHistory();
+  } catch(e) { alert('Error deleting: ' + e.message); }
+}
+
 async function loadLiftHistory() {
   try {
     const r = await fetch('/api/strength/history');
@@ -1195,9 +1203,10 @@ async function loadLiftHistory() {
       const d = new Date(w.date + 'T12:00:00');
       const label = d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
       const done = w.completed_at ? '✓ ' : '';
-      return `<div class="lift-history-item" onclick="viewWorkout(${w.id})">
+      return `<div class="lift-history-item" onclick="viewWorkout(${w.id})" style="position:relative">
         <div class="lift-history-date">${done}${label}</div>
         <div class="lift-history-meta">${w.exercise_count} exercises · ${w.set_count} sets${w.notes ? ' · ' + w.notes : ''}</div>
+        <button onclick="event.stopPropagation();deleteStrengthWorkout(${w.id})" style="position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:14px" title="Delete workout">🗑</button>
       </div>`;
     }).join('');
   } catch(e) { console.error(e); }
