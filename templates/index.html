@@ -177,6 +177,19 @@ nav button.active { color:var(--gold); background:#1a1500; }
 .phase-card .pc-name { font-size:16px; margin-bottom:8px; }
 .phase-card .pc-goal { font-size:12px; color:var(--muted); line-height:1.65; }
 .phase-card .pc-dates { font-size:11px; color:var(--dim); margin-top:10px; }
+.goal-item { border:1px solid var(--border); border-radius:4px; padding:14px 16px; margin-bottom:10px; background:var(--bg2); display:flex; align-items:flex-start; gap:12px; }
+.goal-priority-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+.goal-priority-dot.high { background:#a03030; }
+.goal-priority-dot.medium { background:var(--gold); }
+.goal-priority-dot.low { background:var(--dim); }
+.goal-body { flex:1; }
+.goal-title-text { font-size:14px; margin-bottom:4px; }
+.goal-desc-text { font-size:12px; color:var(--muted); margin-bottom:4px; line-height:1.5; }
+.goal-impact-text { font-size:11px; color:var(--dim); font-style:italic; margin-bottom:6px; }
+.goal-tags { display:flex; gap:6px; flex-wrap:wrap; }
+.goal-tag { font-size:10px; border:1px solid var(--border); padding:2px 8px; border-radius:2px; color:var(--dim); }
+.goal-delete { background:transparent; border:none; color:var(--dim); cursor:pointer; font-size:16px; padding:0 4px; flex-shrink:0; transition:color .15s; }
+.goal-delete:hover { color:#a03030; }
 
 /* ── Modals ── */
 #workout-modal, #body-comp-modal { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.75); align-items:center; justify-content:center; padding:20px; }
@@ -360,7 +373,11 @@ nav button.active { color:var(--gold); background:#1a1500; }
   <!-- RECORDS -->
   <div class="tab" id="tab-records">
     <div id="records-content">
-      <div class="section-title" style="margin-top:0">Running Personal Records</div>
+      <div class="section-title" style="margin-top:0;display:flex;align-items:center;justify-content:space-between">
+        <span>Running Personal Records</span>
+        <button onclick="recalcRecords()" style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 12px;cursor:pointer;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-family:Georgia,serif;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--dim)'">⟳ Recalculate</button>
+      </div>
+      <div id="recalc-status" style="font-size:11px;color:var(--dim);margin-bottom:10px;display:none"></div>
       <div id="run-prs"><div class="spinner"></div></div>
       <div class="section-title">Cycling Personal Records</div>
       <div id="ride-prs"><div class="spinner"></div></div>
@@ -439,7 +456,31 @@ nav button.active { color:var(--gold); background:#1a1500; }
   <!-- GOALS -->
   <div class="tab" id="tab-goals">
     <div id="goals-content">
-      <div class="section-title" style="margin-top:0">Training Phases</div>
+      <div class="section-title" style="margin-top:0">Active Goals</div>
+      <div id="goals-list"><div class="spinner"></div></div>
+
+      <div class="section-title" style="margin-top:28px">Add New Goal</div>
+      <div class="kpi-add-form">
+        <div class="kpi-form-row">
+          <input type="text" id="goal-title" placeholder="Goal title (required)" style="flex:2">
+          <input type="date" id="goal-date" placeholder="Target date">
+          <select id="goal-priority" style="flex:1">
+            <option value="high">High priority</option>
+            <option value="medium" selected>Medium priority</option>
+            <option value="low">Low priority</option>
+          </select>
+        </div>
+        <div class="kpi-form-row">
+          <input type="text" id="goal-desc" placeholder="Description (optional)" style="flex:1">
+        </div>
+        <div class="kpi-form-row">
+          <input type="text" id="goal-impact" placeholder="Impact on training (e.g. avoid heavy legs 3 days before)" style="flex:1">
+        </div>
+        <button class="kpi-submit" onclick="saveGoal()">Add Goal</button>
+        <span id="goal-status" style="font-size:11px;color:var(--green);margin-left:12px"></span>
+      </div>
+
+      <div class="section-title" style="margin-top:28px">Training Phases</div>
       <div id="phases-list"><div class="spinner"></div></div>
     </div>
   </div>
@@ -610,15 +651,24 @@ async function loadDashboard() {
         <div class="card good"><div class="label">Z2 Time</div><div class="value">${Math.round(totals.z2)}<span class="unit">min</span></div></div>`;
 
       window.workoutsByDate = {};
-      (d.workouts||[]).forEach(w => { if(!window.workoutsByDate[w.date]) window.workoutsByDate[w.date]=[]; window.workoutsByDate[w.date].push(w); });
+      (d.workouts||[]).forEach(w => {
+        // Use start_datetime for correct local date (UTC date field can be off by 1 for evening workouts)
+        const raw = w.start_datetime || w.date;
+        const localDate = raw ? new Date(raw) : null;
+        const key = localDate
+          ? (localDate.getMonth()+1)+'/'+localDate.getDate()  // M/D format matching dateLabel()
+          : dateLabel(w.date);
+        if(!window.workoutsByDate[key]) window.workoutsByDate[key]=[];
+        window.workoutsByDate[key].push(w);
+      });
 
       const maxMin = Math.max(...d.activity.map(a=>(a.run_min||0)+(a.ride_min||0)+(a.strength_min||0)+(a.cardio_min||0)+(a.walk_min||0)),1);
       document.getElementById('week-chart').innerHTML = d.activity.map(day => {
         const total=(day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
         const pct=v=>Math.round(v/maxMin*100);
         const label = dateLabel(day.date);
-        const hasW=window.workoutsByDate[day.date]&&window.workoutsByDate[day.date].length>0;
-        const clickable=hasW?`onclick="openDayWorkouts('${day.date}',window.workoutsByDate['${day.date}']||[])" style="cursor:pointer"`:'';
+        const hasW=window.workoutsByDate[label]&&window.workoutsByDate[label].length>0;
+        const clickable=hasW?`onclick="openDayWorkouts('${label}',window.workoutsByDate['${label}']||[])" style="cursor:pointer"`:'';
         return `<div class="day-row ${hasW?'hover-day':''}" ${clickable}>
           <div class="day-label" style="color:${hasW?'var(--text)':'var(--dim)'}">${label}</div>
           <div class="bar-group">
@@ -1051,24 +1101,112 @@ async function generateReport() {
 async function loadGoals() {
   goalsLoaded = true;
   try {
-    const r=await fetch('/api/phases');
-    const phases=await r.json();
-    document.getElementById('phases-list').innerHTML=phases.map(p=>`
+    const [goalsR, phasesR] = await Promise.all([
+      fetch('/api/goals'),
+      fetch('/api/phases')
+    ]);
+    const goals = await goalsR.json();
+    const phases = await phasesR.json();
+
+    // Render goals list
+    const goalsList = document.getElementById('goals-list');
+    if (!goals.length) {
+      goalsList.innerHTML = '<p style="color:var(--dim);font-size:12px">No active goals yet. Add one below.</p>';
+    } else {
+      goalsList.innerHTML = goals.map(g => {
+        const days = g.target_date ? Math.round((new Date(g.target_date+'T12:00:00') - new Date()) / 86400000) : null;
+        const daysStr = days !== null ? (days === 0 ? 'Today!' : days > 0 ? `${days} days away` : `${Math.abs(days)} days ago`) : '';
+        const dateStr = g.target_date ? new Date(g.target_date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+        return `<div class="goal-item">
+          <div class="goal-priority-dot ${g.priority}"></div>
+          <div class="goal-body">
+            <div class="goal-title-text">${esc(g.title)}</div>
+            ${g.description ? `<div class="goal-desc-text">${esc(g.description)}</div>` : ''}
+            ${g.impact_on_training ? `<div class="goal-impact-text">⚡ ${esc(g.impact_on_training)}</div>` : ''}
+            <div class="goal-tags">
+              ${dateStr ? `<span class="goal-tag">${dateStr}</span>` : ''}
+              ${daysStr ? `<span class="goal-tag">${daysStr}</span>` : ''}
+              <span class="goal-tag">${g.priority} priority</span>
+            </div>
+          </div>
+          <button class="goal-delete" onclick="deleteGoal(${g.id})" title="Delete">✕</button>
+        </div>`;
+      }).join('');
+    }
+
+    // Render phases
+    document.getElementById('phases-list').innerHTML = phases.map(p => `
       <div class="phase-card ${p.is_current?'current':''}">
         <div class="pc-badge ${p.is_current?'':'upcoming'}">${p.is_current?'Current Phase':'Upcoming'}</div>
         <div class="pc-name">${p.name}</div>
         <div class="pc-goal">${p.goal}</div>
         <div class="pc-dates">${p.start} → ${p.end}${p.is_current&&p.days_remaining>0?` · ${p.days_remaining} days remaining`:''}</div>
       </div>`).join('');
-  } catch(e){document.getElementById('phases-list').textContent='Error loading phases.';}
+  } catch(e) { document.getElementById('phases-list').textContent = 'Error loading goals.'; }
+}
+
+async function saveGoal() {
+  const title = document.getElementById('goal-title').value.trim();
+  const status = document.getElementById('goal-status');
+  if (!title) { status.style.color='#c0392b'; status.textContent='Title is required.'; return; }
+  const payload = {
+    title,
+    description:        document.getElementById('goal-desc').value.trim(),
+    target_date:        document.getElementById('goal-date').value || null,
+    priority:           document.getElementById('goal-priority').value,
+    status:             'active',
+    impact_on_training: document.getElementById('goal-impact').value.trim()
+  };
+  try {
+    const r = await fetch('/api/goals', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    status.style.color = 'var(--green)'; status.textContent = 'Goal added!';
+    document.getElementById('goal-title').value = '';
+    document.getElementById('goal-desc').value = '';
+    document.getElementById('goal-date').value = '';
+    document.getElementById('goal-impact').value = '';
+    document.getElementById('goal-priority').value = 'medium';
+    goalsLoaded = false; await loadGoals();
+    setTimeout(() => status.textContent = '', 3000);
+  } catch(e) { status.style.color='#c0392b'; status.textContent='Error: '+e.message; }
+}
+
+async function deleteGoal(id) {
+  if (!confirm('Delete this goal?')) return;
+  try {
+    await fetch('/api/goals/'+id, {method:'DELETE'});
+    goalsLoaded = false; loadGoals();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+// ── Records recalculate ───────────────────────────────────────
+async function recalcRecords() {
+  const status = document.getElementById('recalc-status');
+  status.style.display = 'block';
+  status.style.color = 'var(--dim)';
+  status.textContent = 'Recalculating from full workout history…';
+  try {
+    const r = await fetch('/api/records/recalculate', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      status.style.color = 'var(--green)';
+      status.textContent = `✓ Updated ${d.count} records. Reloading…`;
+      recordsLoaded = false;
+      setTimeout(() => { loadRecords(); status.style.display='none'; }, 1500);
+    } else {
+      status.style.color = '#c0392b';
+      status.textContent = 'Error: ' + (d.error || 'unknown');
+    }
+  } catch(e) { status.style.color='#c0392b'; status.textContent='Error: '+e.message; }
 }
 
 // ── Workout modal ─────────────────────────────────────────────
-async function openDayWorkouts(dateStr, workouts) {
+async function openDayWorkouts(labelKey, workouts) {
   if(!workouts||!workouts.length) return;
   if(workouts.length===1&&workouts[0].activity_id){openWorkout(workouts[0].activity_id,workouts[0].name);return;}
   const modal=document.getElementById('workout-modal');
-  document.getElementById('modal-title').textContent=dateLabel(dateStr);
+  document.getElementById('modal-title').textContent=labelKey;
   document.getElementById('modal-meta').textContent=workouts.length+' workouts';
   document.getElementById('modal-stats').innerHTML='';
   document.getElementById('modal-zones').innerHTML=renderWorkoutRows(workouts);
@@ -1090,17 +1228,36 @@ async function openWorkout(activityId, name) {
     const r=await fetch('/api/workout/'+activityId);
     const d=await r.json();
     if(d.error) throw new Error(d.error);
-    const act=d.activity,zones=d.zones,splits=d.splits||[],apple=d.apple;
-    document.getElementById('modal-meta').textContent=[act.date,act.sport_type,act.distance_miles?act.distance_miles.toFixed(2)+' mi':'',act.moving_time_min?Math.round(act.moving_time_min)+' min':''].filter(Boolean).join('  ·  ');
+    const act=d.activity,zones=d.zones,splits=d.splits||[],apple=d.apple,speed=d.speed_summary;
+    // Use start_datetime for correct local date display
+    const displayDate = act.start_datetime
+      ? new Date(act.start_datetime).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
+      : act.date;
+    document.getElementById('modal-meta').textContent=[displayDate,act.sport_type,act.distance_miles?act.distance_miles.toFixed(2)+' mi':'',act.moving_time_min?Math.round(act.moving_time_min)+' min':''].filter(Boolean).join('  ·  ');
     const stats=[];
     if(act.distance_miles) stats.push({label:'Distance',value:act.distance_miles.toFixed(2),unit:'mi'});
     if(act.moving_time_min) stats.push({label:'Duration',value:Math.round(act.moving_time_min),unit:'min'});
+    if(speed&&speed.avg_speed_mph) stats.push({label:'Avg Speed',value:speed.avg_speed_mph,unit:'mph'});
     if(apple&&apple.avg_pace_display) stats.push({label:'Avg Pace',value:apple.avg_pace_display,unit:'/mi'});
     if(act.avg_hr) stats.push({label:'Avg HR',value:Math.round(act.avg_hr),unit:'bpm'});
     if(act.max_hr) stats.push({label:'Max HR',value:Math.round(act.max_hr),unit:'bpm'});
     if(act.total_elevation_gain_m) stats.push({label:'Elevation',value:Math.round(act.total_elevation_gain_m*3.28),unit:'ft'});
     if(act.calories) stats.push({label:'Calories',value:Math.round(act.calories),unit:'kcal'});
     document.getElementById('modal-stats').innerHTML=stats.map(s=>`<div class="modal-stat"><div class="label">${s.label}</div><div class="value">${s.value}<span class="unit">${s.unit}</span></div></div>`).join('');
+    // Ride-specific: distance progress bar vs MS150 daily stage
+    if(speed && ['Ride','GravelRide','VirtualRide'].includes(act.sport_type)) {
+      const ms150Day=75, pct=Math.min(Math.round((speed.distance_miles/ms150Day)*100),100);
+      document.getElementById('modal-pace-chart').innerHTML=`
+        <div class="modal-section-title">MS150 Stage Progress</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px">
+          <span>${speed.distance_miles} mi ridden</span><span>${ms150Day} mi daily target</span>
+        </div>
+        <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:4px">
+          <div style="height:100%;width:${pct}%;background:var(--gold);border-radius:4px;transition:width .5s"></div>
+        </div>
+        <div style="font-size:11px;color:var(--dim);text-align:right">${pct}% of stage</div>`;
+      document.getElementById('modal-elev-chart').innerHTML='';
+    }
     const zoneData=zones||(apple?{z1_min:apple.z1_min,z2_min:apple.z2_min,z3_min:apple.z3_min,z4_min:apple.z4_min,z5_min:apple.z5_min}:null);
     if(zoneData){
       const zDefs=[{key:'z1_min',label:'Z1',color:'#555'},{key:'z2_min',label:'Z2',color:'#4a7c59'},{key:'z3_min',label:'Z3',color:'#c8a96e'},{key:'z4_min',label:'Z4',color:'#c07040'},{key:'z5_min',label:'Z5',color:'#a03030'}];
