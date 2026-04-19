@@ -652,9 +652,9 @@ async function loadDashboard() {
 
       window.workoutsByDate = {};
       (d.workouts||[]).forEach(w => {
-        // Key by w.date (YYYY-MM-DD) to match daily_activity_summary rows exactly.
-        // start_datetime is stored for modal display only (see openWorkout).
-        const key = w.date;
+        // Use server-computed local_date (Central time) so evening workouts
+        // show on the correct calendar day (e.g. 11pm walk on 4/15, not 4/16).
+        const key = w.local_date || w.date;
         if(!window.workoutsByDate[key]) window.workoutsByDate[key]=[];
         window.workoutsByDate[key].push(w);
       });
@@ -664,7 +664,11 @@ async function loadDashboard() {
         const total=(day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
         const pct=v=>Math.round(v/maxMin*100);
         const label = dateLabel(day.date);
-        const hasW=window.workoutsByDate[day.date]&&window.workoutsByDate[day.date].length>0;
+        // Check workouts by local_date key (Central time), which is what workoutsByDate is keyed on.
+        // For evening workouts, local_date may differ from day.date (UTC summary date).
+        // We show the pill on the local_date row so it matches what the user expects.
+        const dayWorkouts = window.workoutsByDate[day.date] || [];
+        const hasW = dayWorkouts.length > 0;
         const clickable=hasW?`onclick="openDayWorkouts('${day.date}',window.workoutsByDate['${day.date}']||[])" style="cursor:pointer"`:'';
         return `<div class="day-row ${hasW?'hover-day':''}" ${clickable}>
           <div class="day-label" style="color:${hasW?'var(--text)':'var(--dim)'}">${label}</div>
