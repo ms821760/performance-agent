@@ -215,9 +215,8 @@ def dashboard():
             WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date DESC LIMIT 7
         """)
-        # Include start_datetime so the frontend can display the correct local date
         workouts = run_query("""
-            SELECT activity_id, date, start_datetime, sport_type,
+            SELECT activity_id, date, sport_type,
                    name, moving_time_min, distance_miles, avg_hr
             FROM workouts_strava
             WHERE date >= CURRENT_DATE - INTERVAL '8 days'
@@ -929,10 +928,13 @@ def training_load():
 @login_required
 def workout_detail(activity_id):
     try:
+        # Use only columns that are definitely stored in Supabase.
+        # avg_speed_mps is the raw stored value; we convert to mph in Python.
+        # start_datetime may not be synced to Supabase, so omit it here.
         activity = run_query(f"""
-            SELECT activity_id, date, start_datetime, sport_type, name,
+            SELECT activity_id, date, sport_type, name,
                    distance_miles, moving_time_min, avg_hr, max_hr,
-                   calories, total_elevation_gain_m, avg_speed_mph
+                   calories, total_elevation_gain_m, avg_speed_mps
             FROM workouts_strava WHERE activity_id::text = '{str(activity_id)}' LIMIT 1
         """)
         if not activity:
@@ -964,23 +966,25 @@ def workout_detail(activity_id):
                     FROM workout_splits WHERE workout_id = '{apple[0]['workout_id']}' ORDER BY mile
                 """)
 
-        # For rides: build speed/distance/elevation summary
+        # For rides: build speed/distance/elevation summary from stored columns
         speed_summary = None
         if act['sport_type'] in ('Ride', 'GravelRide', 'VirtualRide'):
             dist    = float(act.get('distance_miles') or 0)
             dur_min = float(act.get('moving_time_min') or 0)
             elev_m  = float(act.get('total_elevation_gain_m') or 0)
-            avg_sp  = float(act.get('avg_speed_mph') or 0)
-            if not avg_sp and dur_min > 0:
-                avg_sp = dist / (dur_min / 60)
+            # Convert avg_speed_mps (m/s) → mph; fall back to dist/time if missing
+            mps     = float(act.get('avg_speed_mps') or 0)
+            avg_sp  = round(mps * 2.23694, 1) if mps else (
+                round(dist / (dur_min / 60), 1) if dur_min > 0 else 0
+            )
             speed_summary = {
-                'avg_speed_mph':    round(avg_sp, 1),
-                'distance_miles':   round(dist, 2),
-                'duration_min':     round(dur_min, 1),
+                'avg_speed_mph':     avg_sp,
+                'distance_miles':    round(dist, 2),
+                'duration_min':      round(dur_min, 1),
                 'elevation_gain_ft': round(elev_m * 3.28084),
-                'calories':         act.get('calories'),
-                'avg_hr':           act.get('avg_hr'),
-                'max_hr':           act.get('max_hr'),
+                'calories':          act.get('calories'),
+                'avg_hr':            act.get('avg_hr'),
+                'max_hr':            act.get('max_hr'),
             }
 
         return jsonify({
