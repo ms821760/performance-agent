@@ -195,7 +195,7 @@ def dashboard():
                    inbody_score, visceral_fat_level
             FROM body_composition ORDER BY date DESC LIMIT 1
         """)
-        activity = run_query("""
+        activity_rows = run_query("""
             SELECT date, run_min, ride_min, strength_min, cardio_min, walk_min,
                    z1_min, z2_min, z3_min, z4_min, z5_min,
                    total_calories_kcal, steps
@@ -223,6 +223,39 @@ def dashboard():
             ORDER BY start_datetime DESC
         """)
 
+        # Build a full 8-day activity grid — fill missing days with zeros
+        # so the chart always shows every day of the week
+        activity_by_date = {r['date']: r for r in (activity_rows or [])}
+        activity = []
+        for i in range(7, -1, -1):
+            d = (date.today() - timedelta(days=i)).isoformat()
+            if d in activity_by_date:
+                activity.append(activity_by_date[d])
+            else:
+                activity.append({
+                    'date': d, 'run_min': 0, 'ride_min': 0, 'strength_min': 0,
+                    'cardio_min': 0, 'walk_min': 0, 'z1_min': 0, 'z2_min': 0,
+                    'z3_min': 0, 'z4_min': 0, 'z5_min': 0,
+                    'total_calories_kcal': 0, 'steps': 0
+                })
+
+        # For each workout, compute its local date in US Central time (UTC-6 standard, UTC-5 daylight).
+        # We use UTC-6 as a safe approximation — the only edge case is workouts 11pm-midnight CDT,
+        # which is rare and can be corrected by fixing daily_activity_summary at the DB level.
+        from datetime import datetime as dt, timezone, timedelta as td
+        central_offset = timezone(td(hours=-6))  # CST (UTC-6); CDT (UTC-5) differs by 1hr near midnight
+        for w in (workouts or []):
+            if w.get('start_datetime'):
+                try:
+                    raw = w['start_datetime'].replace('Z', '+00:00')
+                    utc_dt = dt.fromisoformat(raw)
+                    local_dt = utc_dt.astimezone(central_offset)
+                    w['local_date'] = local_dt.strftime('%Y-%m-%d')
+                except Exception:
+                    w['local_date'] = w['date']
+            else:
+                w['local_date'] = w['date']
+
         nutrition_dates = {r['date'] for r in (nutrition or [])}
         missing_nutrition = []
         for i in range(7):
@@ -235,7 +268,7 @@ def dashboard():
 
         return jsonify({
             'body_comp':         body[0] if body else None,
-            'activity':          activity or [],
+            'activity':          activity,
             'health':            health or [],
             'nutrition':         nutrition or [],
             'workouts':          workouts or [],
@@ -341,12 +374,10 @@ def recalculate_records():
                     if not rows:
                         continue
 
-                    # Delete existing records for this sport+distance first
+                    # Delete existing records for this exact sport+label before reinserting
                     requests.delete(
                         f"{SUPABASE_URL}/rest/v1/personal_records"
-                        f"?sport=eq.{sport_key}"
-                        f"&distance_m=gte.{round(dist_m * 0.97, 1)}"
-                        f"&distance_m=lte.{round(dist_m * 1.03, 1)}",
+                        f"?sport=eq.{sport_key}&distance_label=eq.{label}",
                         headers=sb_headers()
                     )
 
