@@ -652,12 +652,9 @@ async function loadDashboard() {
 
       window.workoutsByDate = {};
       (d.workouts||[]).forEach(w => {
-        // Use start_datetime for correct local date (UTC date field can be off by 1 for evening workouts)
-        const raw = w.start_datetime || w.date;
-        const localDate = raw ? new Date(raw) : null;
-        const key = localDate
-          ? (localDate.getMonth()+1)+'/'+localDate.getDate()  // M/D format matching dateLabel()
-          : dateLabel(w.date);
+        // Key by w.date (YYYY-MM-DD) to match daily_activity_summary rows exactly.
+        // start_datetime is stored for modal display only (see openWorkout).
+        const key = w.date;
         if(!window.workoutsByDate[key]) window.workoutsByDate[key]=[];
         window.workoutsByDate[key].push(w);
       });
@@ -667,8 +664,8 @@ async function loadDashboard() {
         const total=(day.run_min||0)+(day.ride_min||0)+(day.strength_min||0)+(day.cardio_min||0)+(day.walk_min||0);
         const pct=v=>Math.round(v/maxMin*100);
         const label = dateLabel(day.date);
-        const hasW=window.workoutsByDate[label]&&window.workoutsByDate[label].length>0;
-        const clickable=hasW?`onclick="openDayWorkouts('${label}',window.workoutsByDate['${label}']||[])" style="cursor:pointer"`:'';
+        const hasW=window.workoutsByDate[day.date]&&window.workoutsByDate[day.date].length>0;
+        const clickable=hasW?`onclick="openDayWorkouts('${day.date}',window.workoutsByDate['${day.date}']||[])" style="cursor:pointer"`:'';
         return `<div class="day-row ${hasW?'hover-day':''}" ${clickable}>
           <div class="day-label" style="color:${hasW?'var(--text)':'var(--dim)'}">${label}</div>
           <div class="bar-group">
@@ -1202,11 +1199,11 @@ async function recalcRecords() {
 }
 
 // ── Workout modal ─────────────────────────────────────────────
-async function openDayWorkouts(labelKey, workouts) {
+async function openDayWorkouts(dateStr, workouts) {
   if(!workouts||!workouts.length) return;
   if(workouts.length===1&&workouts[0].activity_id){openWorkout(workouts[0].activity_id,workouts[0].name);return;}
   const modal=document.getElementById('workout-modal');
-  document.getElementById('modal-title').textContent=labelKey;
+  document.getElementById('modal-title').textContent=dateLabel(dateStr);
   document.getElementById('modal-meta').textContent=workouts.length+' workouts';
   document.getElementById('modal-stats').innerHTML='';
   document.getElementById('modal-zones').innerHTML=renderWorkoutRows(workouts);
