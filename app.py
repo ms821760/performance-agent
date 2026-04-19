@@ -82,11 +82,16 @@ KEY COACHING RULES:
   Use this full history to answer questions about any time period. Never say you can only see a limited window.
   month_to_date covers from the 1st of the current month to today ({TODAY}).
   If the month just started and month_to_date only covers a few days, say so explicitly.
+
+CRITICAL DATE RULE:
+- Today is {TODAY}. When referencing workouts, always use their actual date from the data.
+- If a workout's date == today's date, call it "today's workout". NEVER call it "yesterday's workout".
+- Only say "yesterday" if the workout date is literally yesterday's date.
 """
 
 DB_SCHEMA = """
 DATABASE SCHEMA (PostgreSQL):
-- workouts_strava: activity_id, date, sport_type, name, moving_time_min, distance_miles, avg_hr, max_hr, calories, total_elevation_gain_m. sport_type: Run/Ride/GravelRide/VirtualRide/Workout/Strength/Cardio/Walk
+- workouts_strava: activity_id, date, start_datetime, sport_type, name, moving_time_min, distance_miles, avg_hr, max_hr, calories, total_elevation_gain_m, avg_speed_mph. sport_type: Run/Ride/GravelRide/VirtualRide/Workout/Strength/Cardio/Walk
 - workouts_apple: workout_id, date, sport_type, distance_mi, duration_min, avg_pace_display, avg_hr_bpm, max_hr_bpm, z1_min, z2_min, z3_min, z4_min, z5_min, elevation_gain_ft, elevation_loss_ft
 - workout_splits: workout_id, date, mile, split_pace_display, split_pace_min_mi, split_distance_mi, split_duration_min, elev_gain_ft, elev_loss_ft, avg_hr_bpm
 - workout_hr_zones: activity_id, date, sport_type, z1_min, z2_min, z3_min, z4_min, z5_min, avg_hr_bpm, max_hr_bpm
@@ -96,6 +101,7 @@ DATABASE SCHEMA (PostgreSQL):
 - personal_records: distance_label, sport, rank, best_time_sec, best_pace_display, achieved_date, distance_m
 - body_composition: date, weight_lb, body_fat_pct, skeletal_muscle_mass_lb, inbody_score, visceral_fat_level
 - performance_tests: id, test_type, value, unit, date, notes
+- goals: id, title, description, target_date, priority, status, impact_on_training, created_at
 
 POSTGRESQL DATE RULES:
 - NEVER use YEAR(), MONTH(), DAY() — PostgreSQL only
@@ -209,8 +215,10 @@ def dashboard():
             WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date DESC LIMIT 7
         """)
+        # Include start_datetime so the frontend can display the correct local date
         workouts = run_query("""
-            SELECT activity_id, date, sport_type, name, moving_time_min, distance_miles, avg_hr
+            SELECT activity_id, date, start_datetime, sport_type,
+                   name, moving_time_min, distance_miles, avg_hr
             FROM workouts_strava
             WHERE date >= CURRENT_DATE - INTERVAL '8 days'
             ORDER BY date DESC
@@ -285,6 +293,90 @@ def records():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ── API: Records — recalculate from raw workouts ──────────────
+@app.route('/api/records/recalculate', methods=['POST'])
+@login_required
+def recalculate_records():
+    """
+    Recalculate all PRs from raw workouts_strava data.
+    Idempotent — safe to run any time. Replaces the manual DB script.
+    """
+    try:
+        ride_brackets = [
+            (10,   16093.4,  '10 mi'),
+            (20,   32186.9,  '20 mi'),
+            (25,   40233.6,  '25 mi'),
+            (30,   48280.3,  '30 mi'),
+            (40,   64373.8,  '40 mi'),
+            (50,   80467.2,  '50 mi'),
+            (62.1, 99965.0,  '100K'),
+            (100,  160934.0, '100 mi'),
+        ]
+        run_brackets = [
+            (1,    1609.34,  '1 mi'),
+            (3.1,  4989.0,   '5K'),
+            (6.2,  9978.0,   '10K'),
+            (13.1, 21082.0,  'Half Marathon'),
+            (26.2, 42164.0,  'Marathon'),
+        ]
+
+        updated = []
+
+        def recalc_sport(brackets, sport_filter_sql, sport_key):
+            for dist_mi, dist_m, label in brackets:
+                try:
+                    rows = run_query(f"""
+                        SELECT
+                            date,
+                            (moving_time_min * 60.0) / (distance_miles / {dist_mi}) AS estimated_time_sec,
+                            distance_miles,
+                            moving_time_min
+                        FROM workouts_strava
+                        WHERE sport_type IN ({sport_filter_sql})
+                          AND distance_miles >= {dist_mi * 0.98}
+                          AND moving_time_min IS NOT NULL
+                          AND distance_miles IS NOT NULL
+                        ORDER BY estimated_time_sec ASC
+                        LIMIT 3
+                    """)
+                    if not rows:
+                        continue
+
+                    for rank_idx, r in enumerate(rows[:3], start=1):
+                        t_sec = float(r['estimated_time_sec'])
+                        if sport_key == 'ride':
+                            speed_mph = dist_mi / (t_sec / 3600)
+                            pace_d = f"{round(speed_mph, 1)} mph avg"
+                        else:
+                            p_sec = t_sec / dist_mi
+                            pace_d = f"{int(p_sec // 60)}:{int(p_sec % 60):02d}/mi"
+
+                        requests.post(
+                            f"{SUPABASE_URL}/rest/v1/personal_records?on_conflict=sport,distance_m,rank",
+                            headers={**sb_headers(), 'Prefer': 'resolution=merge-duplicates'},
+                            json=[{
+                                'sport':             sport_key,
+                                'distance_m':        round(dist_m, 1),
+                                'distance_label':    label,
+                                'rank':              rank_idx,
+                                'best_time_sec':     round(t_sec, 1),
+                                'best_pace_display': pace_d,
+                                'achieved_date':     r['date']
+                            }]
+                        )
+                        if rank_idx == 1:
+                            updated.append(f"{sport_key} {label}: {pace_d} on {r['date']}")
+
+                except Exception as e:
+                    print(f'Recalc error {sport_key} {label}: {e}')
+
+        recalc_sport(ride_brackets, "'Ride','GravelRide','VirtualRide'", 'ride')
+        recalc_sport(run_brackets,  "'Run'", 'run')
+
+        return jsonify({'ok': True, 'updated': updated, 'count': len(updated)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ── API: Performance tests ────────────────────────────────────
 @app.route('/api/performance_tests')
 @login_required
@@ -314,6 +406,74 @@ def add_performance_test():
                 'date':      data.get('date', date.today().isoformat()),
                 'notes':     data.get('notes', '')
             }]
+        )
+        r.raise_for_status()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── API: Goals ────────────────────────────────────────────────
+@app.route('/api/goals')
+@login_required
+def get_goals():
+    try:
+        data = run_query("""
+            SELECT id, title, description, target_date, priority,
+                   status, impact_on_training, created_at
+            FROM goals
+            ORDER BY target_date ASC NULLS LAST,
+                     CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END
+        """)
+        return jsonify(data or [])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/goals', methods=['POST'])
+@login_required
+def add_goal():
+    try:
+        data = request.json
+        r = requests.post(
+            f'{SUPABASE_URL}/rest/v1/goals',
+            headers={**sb_headers(), 'Prefer': 'return=representation'},
+            json=[{
+                'title':              data.get('title'),
+                'description':        data.get('description', ''),
+                'target_date':        data.get('target_date') or None,
+                'priority':           data.get('priority', 'medium'),
+                'status':             data.get('status', 'active'),
+                'impact_on_training': data.get('impact_on_training', '')
+            }]
+        )
+        r.raise_for_status()
+        return jsonify(r.json()[0] if r.json() else {'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/goals/<int:goal_id>', methods=['PATCH'])
+@login_required
+def update_goal(goal_id):
+    try:
+        data    = request.json
+        allowed = {'title', 'description', 'target_date', 'priority', 'status', 'impact_on_training'}
+        payload = {k: v for k, v in data.items() if k in allowed}
+        r = requests.patch(
+            f'{SUPABASE_URL}/rest/v1/goals?id=eq.{goal_id}',
+            headers=sb_headers(),
+            json=payload
+        )
+        r.raise_for_status()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/goals/<int:goal_id>', methods=['DELETE'])
+@login_required
+def delete_goal(goal_id):
+    try:
+        r = requests.delete(
+            f'{SUPABASE_URL}/rest/v1/goals?id=eq.{goal_id}',
+            headers=sb_headers()
         )
         r.raise_for_status()
         return jsonify({'ok': True})
@@ -509,6 +669,15 @@ def chat():
                 ORDER BY sport, distance_m, rank
             """)
 
+        # ── Goals ─────────────────────────────────────────────
+        if any(w in q for w in ['goal', 'race', 'event', '5k', 'priority', 'plan', 'upcoming']):
+            fetched['goals'] = run_query("""
+                SELECT title, description, target_date, priority, status, impact_on_training
+                FROM goals
+                WHERE status = 'active'
+                ORDER BY target_date ASC NULLS LAST
+            """)
+
         # ── Performance tests / KPIs ──────────────────────────
         if any(w in q for w in ['kpi', 'ftp', 'pull up', 'push up', 'pullup', 'pushup',
                                   'test', 'performance test', 'dip', 'plank', 'vo2']):
@@ -593,6 +762,7 @@ COACHING RULES:
 - month_to_date covers from the 1st of the current month to today ({TODAY}).
   If only a few days into the month, acknowledge that explicitly — don't extrapolate.
 - Keep answers focused: 150-300 words unless a detailed plan is requested.
+- DATE RULE: If a workout's date == today ({TODAY}), refer to it as "today's workout", NEVER "yesterday's".
 """
         messages = []
         for h in history[-6:]:
@@ -760,18 +930,23 @@ def training_load():
 def workout_detail(activity_id):
     try:
         activity = run_query(f"""
-            SELECT activity_id, date, sport_type, name, distance_miles,
-                   moving_time_min, avg_hr, max_hr, calories, total_elevation_gain_m
+            SELECT activity_id, date, start_datetime, sport_type, name,
+                   distance_miles, moving_time_min, avg_hr, max_hr,
+                   calories, total_elevation_gain_m, avg_speed_mph
             FROM workouts_strava WHERE activity_id::text = '{str(activity_id)}' LIMIT 1
         """)
         if not activity:
             return jsonify({'error': 'Activity not found'}), 404
         act = activity[0]
+
         zones = run_query(f"""
             SELECT z1_min, z2_min, z3_min, z4_min, z5_min, avg_hr_bpm, max_hr_bpm
             FROM workout_hr_zones WHERE activity_id = {int(activity_id)} LIMIT 1
         """)
+
         splits, apple = [], []
+
+        # For runs: Apple Health splits
         if act['sport_type'] == 'Run':
             apple = run_query(f"""
                 SELECT workout_id, distance_mi, avg_pace_display, avg_pace_min_mi,
@@ -788,26 +963,47 @@ def workout_detail(activity_id):
                            elev_gain_ft, elev_loss_ft, avg_hr_bpm
                     FROM workout_splits WHERE workout_id = '{apple[0]['workout_id']}' ORDER BY mile
                 """)
-        return jsonify({'activity':act,'zones':zones[0] if zones else None,
-                       'splits':splits or [],'apple':apple[0] if apple else None})
+
+        # For rides: build speed/distance/elevation summary
+        speed_summary = None
+        if act['sport_type'] in ('Ride', 'GravelRide', 'VirtualRide'):
+            dist    = float(act.get('distance_miles') or 0)
+            dur_min = float(act.get('moving_time_min') or 0)
+            elev_m  = float(act.get('total_elevation_gain_m') or 0)
+            avg_sp  = float(act.get('avg_speed_mph') or 0)
+            if not avg_sp and dur_min > 0:
+                avg_sp = dist / (dur_min / 60)
+            speed_summary = {
+                'avg_speed_mph':    round(avg_sp, 1),
+                'distance_miles':   round(dist, 2),
+                'duration_min':     round(dur_min, 1),
+                'elevation_gain_ft': round(elev_m * 3.28084),
+                'calories':         act.get('calories'),
+                'avg_hr':           act.get('avg_hr'),
+                'max_hr':           act.get('max_hr'),
+            }
+
+        return jsonify({
+            'activity':      act,
+            'zones':         zones[0] if zones else None,
+            'splits':        splits or [],
+            'apple':         apple[0] if apple else None,
+            'speed_summary': speed_summary
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 # ── API: Nutrition goals ──────────────────────────────────────
 @app.route('/api/nutrition_goals')
 @login_required
 def nutrition_goals():
     try:
-        # Recent nutrition actuals
         recent_nutrition = run_query("""
             SELECT date, calories_kcal, protein_g, carbs_g, fat_g
             FROM daily_nutrition
             WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date DESC
         """)
-
-        # Recent training load for context
         recent_training = run_query("""
             SELECT date, run_min, ride_min, strength_min, cardio_min,
                    z2_min, z3_min, z4_min, z5_min
@@ -815,8 +1011,6 @@ def nutrition_goals():
             WHERE date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY date DESC
         """)
-
-        # Latest body comp
         body_comp = run_query("""
             SELECT date, weight_lb, body_fat_pct, skeletal_muscle_mass_lb
             FROM body_composition ORDER BY date DESC LIMIT 1
@@ -856,7 +1050,6 @@ Respond with ONLY a valid JSON object, no other text:
         raise ValueError('No JSON in response')
 
     except Exception as e:
-        # Sensible defaults for body comp phase
         return jsonify({
             'calories': 2200,
             'protein_g': 185,
@@ -877,7 +1070,6 @@ def phases():
         ph['days_remaining'] = (date.fromisoformat(p['end']) - date.today()).days
         result.append(ph)
     return jsonify(result)
-
 
 # ── API: Strength logging ─────────────────────────────────────
 @app.route('/api/exercises')
@@ -985,7 +1177,6 @@ def delete_set(set_id):
 @login_required
 def strength_history():
     try:
-        # Recent workouts with set counts
         workouts = run_query("""
             SELECT w.id, w.date, w.notes, w.completed_at,
                    COUNT(s.id) as set_count,
@@ -1005,95 +1196,56 @@ def get_workout(workout_id):
     try:
         sets = run_query(f"""
             SELECT id, exercise, set_number, weight_lbs, reps, rpe, notes
-            FROM strength_sets
-            WHERE workout_id = {workout_id}
-            ORDER BY exercise, set_number
+            FROM strength_sets WHERE workout_id = {workout_id} ORDER BY exercise, set_number
         """)
         return jsonify(sets or [])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/strength/exercise/<path:exercise_name>')
+@app.route('/api/strength/workout/<int:workout_id>', methods=['DELETE'])
 @login_required
-def exercise_history(exercise_name):
+def delete_workout(workout_id):
     try:
-        # Last 10 sessions for this exercise with best set per session
-        history = run_query(f"""
-            SELECT w.date,
-                   s.weight_lbs,
-                   s.reps,
-                   s.set_number,
-                   MAX(s.weight_lbs) OVER (PARTITION BY w.date) as max_weight,
-                   SUM(s.reps) OVER (PARTITION BY w.date) as total_reps
-            FROM strength_sets s
-            JOIN strength_workouts w ON w.id = s.workout_id
-            WHERE s.exercise ILIKE '{exercise_name}'
-            ORDER BY w.date DESC, s.set_number
-            LIMIT 50
-        """)
-        return jsonify(history or [])
+        requests.delete(
+            f'{SUPABASE_URL}/rest/v1/strength_sets?workout_id=eq.{workout_id}',
+            headers=sb_headers()
+        )
+        requests.delete(
+            f'{SUPABASE_URL}/rest/v1/strength_workouts?id=eq.{workout_id}',
+            headers=sb_headers()
+        )
+        return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/strength/pbs')
-@login_required
-def strength_pbs():
-    try:
-        # Personal best weight for each exercise
-        pbs = run_query("""
-            SELECT s.exercise,
-                   MAX(s.weight_lbs) as best_weight,
-                   (SELECT s2.reps FROM strength_sets s2
-                    JOIN strength_workouts w2 ON w2.id = s2.workout_id
-                    WHERE s2.exercise = s.exercise
-                    AND s2.weight_lbs = MAX(s.weight_lbs)
-                    ORDER BY w2.date DESC LIMIT 1) as reps_at_best,
-                   MAX(w.date) as last_performed
-            FROM strength_sets s
-            JOIN strength_workouts w ON w.id = s.workout_id
-            GROUP BY s.exercise
-            ORDER BY s.exercise
-        """)
-        return jsonify(pbs or [])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-# ── API: Workout sessions (mobile form) ───────────────────────
-@app.route('/lift/session/<session_id>')
-def lift_session(session_id):
-    """Mobile workout form — no login required, uses session token."""
-    return render_template('lift.html', session_id=session_id)
-
+# ── API: Lift sessions (mobile workout logging) ───────────────
 @app.route('/api/lift/session', methods=['POST'])
+@login_required
 def create_lift_session():
-    """Create a new workout session — called by Telegram bot."""
-    import secrets
-    data = request.json or {}
-    token = secrets.token_urlsafe(8)
-    r = requests.post(
-        f'{SUPABASE_URL}/rest/v1/workout_sessions',
-        headers={**sb_headers(), 'Prefer': 'return=representation'},
-        json=[{
-            'id':           token,
-            'date':         data.get('date', date.today().isoformat()),
-            'workout_type': data.get('workout_type', 'General'),
-            'status':       'active'
-        }]
-    )
-    r.raise_for_status()
-    base_url = request.host_url.rstrip('/')
-    return jsonify({'token': token, 'url': f'{base_url}/lift/session/{token}'})
-
-@app.route('/api/lift/session/<session_id>', methods=['GET'])
-def get_lift_session(session_id):
-    """Get session + all sets logged so far."""
     try:
-        session = run_query(f"""
+        data         = request.json
+        workout_type = data.get('workout_type', 'General')
+        session_date = data.get('date', date.today().isoformat())
+        r = requests.post(
+            f'{SUPABASE_URL}/rest/v1/workout_sessions',
+            headers={**sb_headers(), 'Prefer': 'return=representation'},
+            json=[{'workout_type': workout_type, 'date': session_date, 'status': 'active'}]
+        )
+        r.raise_for_status()
+        session_id = r.json()[0]['id']
+        url = f"https://web-production-fdff3.up.railway.app/lift/{session_id}"
+        return jsonify({'session_id': session_id, 'url': url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lift/session/<session_id>')
+def get_lift_session(session_id):
+    try:
+        sess = run_query(f"""
             SELECT id, date, workout_type, status
             FROM workout_sessions WHERE id = '{session_id}' LIMIT 1
         """)
-        if not session:
+        if not sess:
             return jsonify({'error': 'Session not found'}), 404
 
         sets = run_query(f"""
@@ -1104,7 +1256,7 @@ def get_lift_session(session_id):
             LEFT JOIN exercises e ON e.name = s.exercise
             WHERE s.workout_id = (
                 SELECT id FROM strength_workouts
-                WHERE date = '{session[0]['date']}'
+                WHERE date = '{sess[0]['date']}'
                 ORDER BY id DESC LIMIT 1
             )
             ORDER BY s.exercise, s.set_number
@@ -1115,7 +1267,6 @@ def get_lift_session(session_id):
             FROM exercises ORDER BY workout_category, name
         """) or []
 
-        # Get last session data for each exercise
         pbs = run_query("""
             SELECT s.exercise,
                    MAX(s.weight_lbs) as best_weight,
@@ -1125,7 +1276,7 @@ def get_lift_session(session_id):
         """) or []
 
         return jsonify({
-            'session':   session[0],
+            'session':   sess[0],
             'sets':      sets,
             'exercises': exercises,
             'pbs':       {p['exercise']: p for p in pbs}
@@ -1135,18 +1286,13 @@ def get_lift_session(session_id):
 
 @app.route('/api/lift/session/<session_id>/complete', methods=['POST'])
 def complete_lift_session(session_id):
-    """Mark session as complete."""
     try:
-        # Get or create the strength_workout for this session
-        session = run_query(f"""
+        sess = run_query(f"""
             SELECT id, date, workout_type FROM workout_sessions
             WHERE id = '{session_id}' LIMIT 1
         """)
-        if not session:
+        if not sess:
             return jsonify({'error': 'Session not found'}), 404
-
-        s = session[0]
-        # Update session status
         requests.patch(
             f'{SUPABASE_URL}/rest/v1/workout_sessions?id=eq.{session_id}',
             headers=sb_headers(),
@@ -1158,13 +1304,11 @@ def complete_lift_session(session_id):
 
 @app.route('/api/lift/session/<session_id>/delete', methods=['POST'])
 def delete_lift_session(session_id):
-    """Delete a session and all its sets."""
     try:
-        session = run_query(f"""
+        sess = run_query(f"""
             SELECT date FROM workout_sessions WHERE id = '{session_id}' LIMIT 1
         """)
-        if session:
-            # Delete sets via workout
+        if sess:
             requests.delete(
                 f'{SUPABASE_URL}/rest/v1/workout_sessions?id=eq.{session_id}',
                 headers=sb_headers()
@@ -1175,23 +1319,20 @@ def delete_lift_session(session_id):
 
 @app.route('/api/lift/log', methods=['POST'])
 def log_lift_set():
-    """Log a single set — called from mobile form."""
     try:
-        data = request.json
+        data       = request.json
         session_id = data.get('session_id')
 
-        # Get or create strength_workout for today
-        session = run_query(f"""
+        sess = run_query(f"""
             SELECT date, workout_type FROM workout_sessions
             WHERE id = '{session_id}' LIMIT 1
         """)
-        if not session:
+        if not sess:
             return jsonify({'error': 'Invalid session'}), 404
 
-        workout_date = session[0]['date']
-        workout_type = session[0]['workout_type']
+        workout_date = sess[0]['date']
+        workout_type = sess[0]['workout_type']
 
-        # Get or create strength_workout
         existing = run_query(f"""
             SELECT id FROM strength_workouts
             WHERE date = '{workout_date}'
@@ -1208,7 +1349,6 @@ def log_lift_set():
             r.raise_for_status()
             workout_id = r.json()[0]['id']
 
-        # Log the set
         row = {
             'workout_id':   workout_id,
             'exercise':     data.get('exercise'),
@@ -1257,24 +1397,6 @@ def lift_history():
             ORDER BY ws.date DESC LIMIT 30
         """)
         return jsonify(sessions or [])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/strength/workout/<int:workout_id>', methods=['DELETE'])
-@login_required
-def delete_workout(workout_id):
-    try:
-        # Delete sets first (cascade should handle it but be explicit)
-        requests.delete(
-            f'{SUPABASE_URL}/rest/v1/strength_sets?workout_id=eq.{workout_id}',
-            headers=sb_headers()
-        )
-        requests.delete(
-            f'{SUPABASE_URL}/rest/v1/strength_workouts?id=eq.{workout_id}',
-            headers=sb_headers()
-        )
-        return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
