@@ -305,7 +305,7 @@ def records():
                     ORDER BY ABS(s.distance_miles - (p.distance_m / 1609.34)) LIMIT 1
                    ) AS activity_id
             FROM personal_records p
-            WHERE p.sport = 'run' AND p.best_time_sec IS NOT NULL
+            WHERE p.sport = 'run'
             ORDER BY p.distance_m, p.rank
         """)
         ride_prs = run_query("""
@@ -317,7 +317,7 @@ def records():
                     ORDER BY ABS(s.distance_miles - (p.distance_m / 1609.34)) LIMIT 1
                    ) AS activity_id
             FROM personal_records p
-            WHERE p.sport = 'ride' AND p.best_time_sec IS NOT NULL
+           WHERE p.sport = 'ride'
             ORDER BY p.distance_m, p.rank
         """)
 
